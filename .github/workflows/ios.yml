@@ -108,11 +108,15 @@ jobs:
             -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
             -exportOptionsPlist ios/ExportOptions.plist \
             -exportPath "$RUNNER_TEMP/ipa"
+          # Resolve the exact IPA name (the upload action doesn't expand globs).
+          IPA=$(ls "$RUNNER_TEMP"/ipa/*.ipa | head -1)
+          echo "IPA_PATH=$IPA" >> "$GITHUB_ENV"
+          echo "Exported IPA: $IPA"
 
       - name: Upload to TestFlight
         uses: apple-actions/upload-testflight-build@v3
         with:
-          app-path: ${{ runner.temp }}/ipa/*.ipa
+          app-path: ${{ env.IPA_PATH }}
           issuer-id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           api-key-id: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           api-private-key: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
