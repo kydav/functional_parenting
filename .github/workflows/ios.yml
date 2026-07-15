@@ -1,0 +1,58 @@
+name: iOS
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Analyze & build (iOS)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.0
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Run tests
+        run: |
+          if ls test/*_test.dart >/dev/null 2>&1; then
+            flutter test
+          else
+            echo "No tests found — skipping."
+          fi
+
+      # GoogleService-Info.plist is gitignored; recreate it from a base64 secret
+      # (it is referenced by the Xcode project, so the build needs it).
+      # Add it with: base64 -i ios/Runner/GoogleService-Info.plist | pbcopy
+      # then save as the GOOGLE_SERVICE_INFO_PLIST repo secret.
+      - name: Restore Firebase config
+        env:
+          GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}
+        run: |
+          if [ -n "$GOOGLE_SERVICE_INFO_PLIST" ]; then
+            echo "$GOOGLE_SERVICE_INFO_PLIST" | base64 --decode > ios/Runner/GoogleService-Info.plist
+            echo "HAS_FIREBASE=true" >> "$GITHUB_ENV"
+          else
+            echo "GOOGLE_SERVICE_INFO_PLIST secret not set — skipping the iOS build."
+          fi
+
+      # Unsigned build — no certificates/provisioning needed for CI verification.
+      - name: Build iOS (no codesign)
+        if: env.HAS_FIREBASE == 'true'
+        run: flutter build ios --debug --no-codesign

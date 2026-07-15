@@ -1,0 +1,73 @@
+name: Android
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Analyze & build (Android)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.0
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed lib
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Run tests
+        run: |
+          if ls test/*_test.dart >/dev/null 2>&1; then
+            flutter test
+          else
+            echo "No tests found — skipping."
+          fi
+
+      # google-services.json is gitignored; recreate it from a base64 secret so
+      # the com.google.gms.google-services Gradle plugin can build.
+      # Add it with: base64 -i android/app/google-services.json | pbcopy
+      # then save as the GOOGLE_SERVICES_JSON repo secret.
+      - name: Restore Firebase config
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            echo "$GOOGLE_SERVICES_JSON" | base64 --decode > android/app/google-services.json
+            echo "HAS_FIREBASE=true" >> "$GITHUB_ENV"
+          else
+            echo "GOOGLE_SERVICES_JSON secret not set — skipping the APK build."
+          fi
+
+      - name: Build debug APK
+        if: env.HAS_FIREBASE == 'true'
+        run: flutter build apk --debug
+
+      - name: Upload APK
+        if: env.HAS_FIREBASE == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: warn
