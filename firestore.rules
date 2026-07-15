@@ -5,11 +5,11 @@ service cloud.firestore {
 
     // Admins may write content. Keep this list in sync with kAdminEmails in
     // lib/core/providers/admin_provider.dart.
-    // TODO: add the founder's email.
     function isAdmin() {
       return request.auth != null
         && request.auth.token.email in [
-          'ky.s.dav@gmail.com'
+          'ky.s.dav@gmail.com',
+          'taylorthomascoaching@gmail.com'
         ];
     }
 

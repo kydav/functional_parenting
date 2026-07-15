@@ -7,8 +7,10 @@ import 'auth_provider.dart';
 /// `isAdmin()` allowlist in `firestore.rules` (rules are the real enforcement;
 /// this just controls what UI is shown).
 ///
-/// TODO: add the founder's email here (and in firestore.rules).
-const kAdminEmails = <String>{'ky.s.dav@gmail.com'};
+const kAdminEmails = <String>{
+  'ky.s.dav@gmail.com',
+  'taylorthomascoaching@gmail.com',
+};
 
 /// Whether the current user may access the admin CMS. In demo mode (no Firebase)
 /// this is true so the CMS can be exercised locally without a real account.
