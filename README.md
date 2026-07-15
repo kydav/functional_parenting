@@ -98,7 +98,6 @@ Add under **Settings → Secrets and variables → Actions**.
 | --- | --- |
 | `IOS_DIST_CERT_P12_BASE64` | Apple Distribution cert+key as `.p12`, base64 |
 | `IOS_DIST_CERT_PASSWORD` | password set when exporting the `.p12` |
-| `IOS_PROVISIONING_PROFILE_BASE64` | App Store provisioning profile, base64 (its UUID + name are read from the profile automatically) |
 | `IOS_TEAM_ID` | Apple Developer Team ID (this project's is `GMAMAXJ88G`) |
 | `APP_STORE_CONNECT_KEY_ID` | App Store Connect API key ID |
 | `APP_STORE_CONNECT_ISSUER_ID` | App Store Connect API issuer ID |
@@ -108,9 +107,10 @@ Add under **Settings → Secrets and variables → Actions**.
 - **Play:** the app listing must already exist and have had **one AAB uploaded
   manually** — the API can't create the app or publish the very first release.
   Give the service account "Release manager" access in the Play Console.
-- **App Store:** the app record must exist in App Store Connect, and the
-  provisioning profile must be an **App Store** distribution profile for
-  `app.auaha.functionalparenting`.
+- **App Store:** the app record must exist in App Store Connect. Signing is
+  cloud-managed via the API key (`-allowProvisioningUpdates`), so no
+  provisioning-profile secret is needed — but the API key must have the
+  **App Manager** role (or higher) so it can manage signing assets.
 - Bump `version:` in `pubspec.yaml` for each new build (App Store/Play reject
   duplicate build numbers).
 

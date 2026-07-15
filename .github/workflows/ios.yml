@@ -8,12 +8,14 @@ on:
 #   GOOGLE_SERVICE_INFO_PLIST        base64 of ios/Runner/GoogleService-Info.plist
 #   IOS_DIST_CERT_P12_BASE64         base64 of the Apple Distribution cert (.p12)
 #   IOS_DIST_CERT_PASSWORD           password used when exporting that .p12
-#   IOS_PROVISIONING_PROFILE_BASE64  base64 of the App Store provisioning profile
-#                                    (its UUID + name are read from the profile)
 #   IOS_TEAM_ID                      Apple Developer Team ID (10 chars)
 #   APP_STORE_CONNECT_KEY_ID         App Store Connect API key ID
 #   APP_STORE_CONNECT_ISSUER_ID      App Store Connect API issuer ID
 #   APP_STORE_CONNECT_PRIVATE_KEY    contents of the API key .p8 file
+#
+# Signing is cloud-managed via the API key (-allowProvisioningUpdates), so no
+# provisioning-profile secret is needed. The API key must have the "App Manager"
+# role (or higher) so it can manage signing assets.
 # ─────────────────────────────────────────────────────────────────────────────
 
 jobs:
@@ -48,26 +50,15 @@ jobs:
           p12-file-base64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
           p12-password: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
 
-      # Decode the profile, read its real UUID + Name straight from it (so we
-      # don't depend on a name secret matching exactly), and install it into
-      # both locations Xcode searches (the path changed in recent Xcode).
-      - name: Install provisioning profile
+      # Write the App Store Connect API key so xcodebuild can manage signing
+      # itself (-allowProvisioningUpdates). Automatic signing only touches the
+      # app target — a manually specified profile would be forced onto the SPM
+      # package targets (Firebase, gRPC, …), which don't support profiles.
+      - name: Write App Store Connect API key
         env:
-          PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+          ASC_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
         run: |
-          echo "$PROFILE_BASE64" | base64 --decode > "$RUNNER_TEMP/dist.mobileprovision"
-          security cms -D -i "$RUNNER_TEMP/dist.mobileprovision" > "$RUNNER_TEMP/profile.plist"
-          UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" "$RUNNER_TEMP/profile.plist")
-          NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" "$RUNNER_TEMP/profile.plist")
-          for dir in \
-            "$HOME/Library/MobileDevice/Provisioning Profiles" \
-            "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"; do
-            mkdir -p "$dir"
-            cp "$RUNNER_TEMP/dist.mobileprovision" "$dir/$UUID.mobileprovision"
-          done
-          echo "PROFILE_UUID=$UUID" >> "$GITHUB_ENV"
-          echo "PROFILE_NAME=$NAME" >> "$GITHUB_ENV"
-          echo "Installed profile '$NAME' ($UUID)"
+          echo "$ASC_PRIVATE_KEY" > "$RUNNER_TEMP/asc_authkey.p8"
 
       - name: Write ExportOptions.plist
         env:
@@ -79,12 +70,8 @@ jobs:
           <plist version="1.0">
           <dict>
             <key>method</key><string>app-store</string>
-            <key>signingStyle</key><string>manual</string>
+            <key>signingStyle</key><string>automatic</string>
             <key>teamID</key><string>${TEAM_ID}</string>
-            <key>provisioningProfiles</key>
-            <dict>
-              <key>${BUNDLE_ID}</key><string>${PROFILE_NAME}</string>
-            </dict>
             <key>uploadBitcode</key><false/>
             <key>uploadSymbols</key><true/>
           </dict>
@@ -92,25 +79,32 @@ jobs:
           EOF
 
       # Compile the Flutter/SPM side unsigned, then archive + export with
-      # xcodebuild so manual-signing settings (passed on the command line)
-      # override the project's automatic-signing defaults.
+      # automatic signing (cloud-managed via the API key), which signs only the
+      # Runner target and leaves the package dependencies unsigned.
       - name: Build signed IPA
         env:
           TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
           flutter build ios --release --no-codesign
           xcodebuild -workspace ios/Runner.xcworkspace \
             -scheme Runner -configuration Release \
             -archivePath "$RUNNER_TEMP/Runner.xcarchive" archive \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/asc_authkey.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
             DEVELOPMENT_TEAM="$TEAM_ID" \
-            CODE_SIGN_STYLE=Manual \
-            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
-            PROVISIONING_PROFILE="$PROFILE_UUID" \
-            CODE_SIGN_IDENTITY="Apple Distribution"
+            CODE_SIGN_STYLE=Automatic
           xcodebuild -exportArchive \
             -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
             -exportOptionsPlist ios/ExportOptions.plist \
-            -exportPath "$RUNNER_TEMP/ipa"
+            -exportPath "$RUNNER_TEMP/ipa" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/asc_authkey.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
 
       - name: Upload to TestFlight
         uses: apple-actions/upload-testflight-build@v3
