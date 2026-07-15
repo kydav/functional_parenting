@@ -51,12 +51,34 @@ flutter run           # runs in demo mode; any email/password signs in
 
 Min iOS deployment target is **15.0** (required by Firebase).
 
-### Enabling Firebase (next step)
-1. `dart pub global activate flutterfire_cli`
-2. `flutterfire configure` -> generates `lib/firebase_options.dart`
-3. In `lib/core/services/firebase_bootstrap.dart`, initialize with
-   `DefaultFirebaseOptions.currentPlatform`. `firebaseReady` flips true and real
-   Firebase Auth takes over from the demo session automatically.
+### Firebase config (kept out of the repo)
+`flutterfire configure` has been run locally. The generated config is
+**gitignored** — it never lands in the repo:
+- `lib/firebase_options.dart`
+- `android/app/google-services.json`
+- `ios/Runner/GoogleService-Info.plist`
+- `firebase.json` / `.firebaserc`
+
+`firebase_bootstrap.dart` initializes Firebase from the **native** config
+(`google-services.json` / `GoogleService-Info.plist`), so no committed Dart
+imports the generated options. A fresh clone still compiles and runs (demo mode)
+without any of these files; add them (via `flutterfire configure`) to enable
+real Firebase.
+
+## CI
+
+Two GitHub Actions pipelines (`.github/workflows/`):
+- **android.yml** — format check, analyze, tests, then builds a debug APK.
+- **ios.yml** — analyze, tests, then an unsigned iOS build.
+
+Analyze/format/test always run. The **build** steps only run once the Firebase
+config secrets are present (otherwise they skip, keeping CI green). To enable
+device builds in CI, add these repo secrets (Settings → Secrets → Actions):
+
+```bash
+base64 -i android/app/google-services.json | pbcopy      # -> GOOGLE_SERVICES_JSON
+base64 -i ios/Runner/GoogleService-Info.plist | pbcopy   # -> GOOGLE_SERVICE_INFO_PLIST
+```
 
 ## Roadmap (post-scaffold)
 - Firebase Auth + Firestore-backed content (CMS for tips/challenges/scripts)
