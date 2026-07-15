@@ -99,7 +99,7 @@ Add under **Settings → Secrets and variables → Actions**.
 | `IOS_DIST_CERT_P12_BASE64` | Apple Distribution cert+key as `.p12`, base64 |
 | `IOS_DIST_CERT_PASSWORD` | password set when exporting the `.p12` |
 | `IOS_PROVISIONING_PROFILE_BASE64` | App Store provisioning profile, base64 (its UUID + name are read from the profile automatically) |
-| `IOS_TEAM_ID` | Apple Developer Team ID (this project's is `3FR6YKNT9G`) |
+| `IOS_TEAM_ID` | Apple Developer Team ID (this project's is `GMAMAXJ88G`) |
 | `APP_STORE_CONNECT_KEY_ID` | App Store Connect API key ID |
 | `APP_STORE_CONNECT_ISSUER_ID` | App Store Connect API issuer ID |
 | `APP_STORE_CONNECT_PRIVATE_KEY` | contents of the API key `.p8` file |
