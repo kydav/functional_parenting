@@ -1,18 +1,27 @@
-name: Android
+name: Android — Deploy
 
+# Manual only — does not run on push/PR.
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
+    inputs:
+      track:
+        description: Google Play track to release to
+        type: choice
+        default: internal
+        options: [internal, alpha, beta, production]
 
-concurrency:
-  group: android-${{ github.ref }}
-  cancel-in-progress: true
+# ── Required repo secrets (Settings → Secrets and variables → Actions) ────────
+#   GOOGLE_SERVICES_JSON        base64 of android/app/google-services.json
+#   ANDROID_KEYSTORE_BASE64     base64 of the upload keystore (.jks)
+#   ANDROID_KEYSTORE_PASSWORD   keystore (store) password
+#   ANDROID_KEY_ALIAS           key alias
+#   ANDROID_KEY_PASSWORD        key password
+#   PLAY_SERVICE_ACCOUNT_JSON   Play Console service-account JSON (plaintext)
+# ─────────────────────────────────────────────────────────────────────────────
 
 jobs:
-  build:
-    name: Analyze & build (Android)
+  deploy:
+    name: Build & deploy to Google Play
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,43 +40,40 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Verify formatting
-        run: dart format --output=none --set-exit-if-changed lib
-
       - name: Analyze
         run: flutter analyze
 
-      - name: Run tests
-        run: |
-          if ls test/*_test.dart >/dev/null 2>&1; then
-            flutter test
-          else
-            echo "No tests found — skipping."
-          fi
-
-      # google-services.json is gitignored; recreate it from a base64 secret so
-      # the com.google.gms.google-services Gradle plugin can build.
-      # Add it with: base64 -i android/app/google-services.json | pbcopy
-      # then save as the GOOGLE_SERVICES_JSON repo secret.
       - name: Restore Firebase config
         env:
           GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: echo "$GOOGLE_SERVICES_JSON" | base64 --decode > android/app/google-services.json
+
+      - name: Decode upload keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
+
+      - name: Write key.properties
+        env:
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
         run: |
-          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
-            echo "$GOOGLE_SERVICES_JSON" | base64 --decode > android/app/google-services.json
-            echo "HAS_FIREBASE=true" >> "$GITHUB_ENV"
-          else
-            echo "GOOGLE_SERVICES_JSON secret not set — skipping the APK build."
-          fi
+          cat > android/key.properties <<EOF
+          storePassword=$STORE_PASSWORD
+          keyPassword=$KEY_PASSWORD
+          keyAlias=$KEY_ALIAS
+          storeFile=upload-keystore.jks
+          EOF
 
-      - name: Build debug APK
-        if: env.HAS_FIREBASE == 'true'
-        run: flutter build apk --debug
+      - name: Build App Bundle
+        run: flutter build appbundle --release
 
-      - name: Upload APK
-        if: env.HAS_FIREBASE == 'true'
-        uses: actions/upload-artifact@v4
+      - name: Upload to Google Play
+        uses: r0adkll/upload-google-play@v1
         with:
-          name: app-debug-apk
-          path: build/app/outputs/flutter-apk/app-debug.apk
-          if-no-files-found: warn
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: app.auaha.functionalparenting
+          releaseFiles: build/app/outputs/bundle/release/app-release.aab
+          track: ${{ inputs.track }}
+          status: completed

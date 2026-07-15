@@ -65,20 +65,59 @@ imports the generated options. A fresh clone still compiles and runs (demo mode)
 without any of these files; add them (via `flutterfire configure`) to enable
 real Firebase.
 
-## CI
+## Deploy pipelines
 
-Two GitHub Actions pipelines (`.github/workflows/`):
-- **android.yml** — format check, analyze, tests, then builds a debug APK.
-- **ios.yml** — analyze, tests, then an unsigned iOS build.
+Two GitHub Actions workflows (`.github/workflows/`), both **manual-trigger only**
+(`workflow_dispatch`) — they do **not** run on push/PR. Run them from the
+repo's **Actions** tab.
 
-Analyze/format/test always run. The **build** steps only run once the Firebase
-config secrets are present (otherwise they skip, keeping CI green). To enable
-device builds in CI, add these repo secrets (Settings → Secrets → Actions):
+- **android.yml** → builds a signed **App Bundle** and uploads to **Google Play**
+  (track selectable: internal / alpha / beta / production).
+- **ios.yml** → builds a signed **IPA** and uploads to **TestFlight**.
 
-```bash
-base64 -i android/app/google-services.json | pbcopy      # -> GOOGLE_SERVICES_JSON
-base64 -i ios/Runner/GoogleService-Info.plist | pbcopy   # -> GOOGLE_SERVICE_INFO_PLIST
-```
+### Required repo secrets
+Add under **Settings → Secrets and variables → Actions**.
+
+**Shared (Firebase config):**
+| Secret | How to produce |
+| --- | --- |
+| `GOOGLE_SERVICES_JSON` | `base64 -i android/app/google-services.json \| pbcopy` |
+| `GOOGLE_SERVICE_INFO_PLIST` | `base64 -i ios/Runner/GoogleService-Info.plist \| pbcopy` |
+
+**Android (Play):**
+| Secret | What it is |
+| --- | --- |
+| `ANDROID_KEYSTORE_BASE64` | `base64 -i upload-keystore.jks \| pbcopy` |
+| `ANDROID_KEYSTORE_PASSWORD` | keystore (store) password |
+| `ANDROID_KEY_ALIAS` | key alias |
+| `ANDROID_KEY_PASSWORD` | key password |
+| `PLAY_SERVICE_ACCOUNT_JSON` | Play Console service-account JSON (paste the file contents) |
+
+**iOS (TestFlight):**
+| Secret | What it is |
+| --- | --- |
+| `IOS_DIST_CERT_P12_BASE64` | Apple Distribution cert+key as `.p12`, base64 |
+| `IOS_DIST_CERT_PASSWORD` | password set when exporting the `.p12` |
+| `IOS_PROVISIONING_PROFILE_BASE64` | App Store provisioning profile, base64 |
+| `IOS_PROVISIONING_PROFILE_NAME` | the profile's exact name (from the portal) |
+| `IOS_TEAM_ID` | Apple Developer Team ID (this project's is `3FR6YKNT9G`) |
+| `APP_STORE_CONNECT_KEY_ID` | App Store Connect API key ID |
+| `APP_STORE_CONNECT_ISSUER_ID` | App Store Connect API issuer ID |
+| `APP_STORE_CONNECT_PRIVATE_KEY` | contents of the API key `.p8` file |
+
+### One-time prerequisites (before the first deploy)
+- **Play:** the app listing must already exist and have had **one AAB uploaded
+  manually** — the API can't create the app or publish the very first release.
+  Give the service account "Release manager" access in the Play Console.
+- **App Store:** the app record must exist in App Store Connect, and the
+  provisioning profile must be an **App Store** distribution profile for
+  `app.auaha.functionalparenting`.
+- Bump `version:` in `pubspec.yaml` for each new build (App Store/Play reject
+  duplicate build numbers).
+
+Android release signing is wired in `android/app/build.gradle.kts` via a
+gitignored `key.properties` (the workflow writes it from the secrets above; when
+absent, local release builds fall back to debug keys).
 
 ## Content CMS (Firestore-backed)
 

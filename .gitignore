@@ -65,3 +65,5 @@ firebase.json
 key.properties
 *.keystore
 *.jks
+ios/ExportOptions.plist
+android/app/upload-keystore.jks

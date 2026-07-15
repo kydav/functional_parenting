@@ -1,19 +1,27 @@
-name: iOS
+name: iOS — Deploy
 
+# Manual only — does not run on push/PR.
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
 
-concurrency:
-  group: ios-${{ github.ref }}
-  cancel-in-progress: true
+# ── Required repo secrets (Settings → Secrets and variables → Actions) ────────
+#   GOOGLE_SERVICE_INFO_PLIST        base64 of ios/Runner/GoogleService-Info.plist
+#   IOS_DIST_CERT_P12_BASE64         base64 of the Apple Distribution cert (.p12)
+#   IOS_DIST_CERT_PASSWORD           password used when exporting that .p12
+#   IOS_PROVISIONING_PROFILE_BASE64  base64 of the App Store provisioning profile
+#   IOS_PROVISIONING_PROFILE_NAME    the profile's exact name (from the portal)
+#   IOS_TEAM_ID                      Apple Developer Team ID (10 chars)
+#   APP_STORE_CONNECT_KEY_ID         App Store Connect API key ID
+#   APP_STORE_CONNECT_ISSUER_ID      App Store Connect API issuer ID
+#   APP_STORE_CONNECT_PRIVATE_KEY    contents of the API key .p8 file
+# ─────────────────────────────────────────────────────────────────────────────
 
 jobs:
-  build:
-    name: Analyze & build (iOS)
+  deploy:
+    name: Build & upload to TestFlight
     runs-on: macos-latest
+    env:
+      BUNDLE_ID: app.auaha.functionalparenting
     steps:
       - uses: actions/checkout@v4
 
@@ -29,30 +37,74 @@ jobs:
       - name: Analyze
         run: flutter analyze
 
-      - name: Run tests
-        run: |
-          if ls test/*_test.dart >/dev/null 2>&1; then
-            flutter test
-          else
-            echo "No tests found — skipping."
-          fi
-
-      # GoogleService-Info.plist is gitignored; recreate it from a base64 secret
-      # (it is referenced by the Xcode project, so the build needs it).
-      # Add it with: base64 -i ios/Runner/GoogleService-Info.plist | pbcopy
-      # then save as the GOOGLE_SERVICE_INFO_PLIST repo secret.
       - name: Restore Firebase config
         env:
           GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}
-        run: |
-          if [ -n "$GOOGLE_SERVICE_INFO_PLIST" ]; then
-            echo "$GOOGLE_SERVICE_INFO_PLIST" | base64 --decode > ios/Runner/GoogleService-Info.plist
-            echo "HAS_FIREBASE=true" >> "$GITHUB_ENV"
-          else
-            echo "GOOGLE_SERVICE_INFO_PLIST secret not set — skipping the iOS build."
-          fi
+        run: echo "$GOOGLE_SERVICE_INFO_PLIST" | base64 --decode > ios/Runner/GoogleService-Info.plist
 
-      # Unsigned build — no certificates/provisioning needed for CI verification.
-      - name: Build iOS (no codesign)
-        if: env.HAS_FIREBASE == 'true'
-        run: flutter build ios --debug --no-codesign
+      - name: Import signing certificate
+        uses: apple-actions/import-codesign-certs@v3
+        with:
+          p12-file-base64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
+          p12-password: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
+
+      - name: Install provisioning profile
+        env:
+          PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          echo "$PROFILE_BASE64" | base64 --decode > \
+            "$HOME/Library/MobileDevice/Provisioning Profiles/dist.mobileprovision"
+
+      - name: Write ExportOptions.plist
+        env:
+          TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+          PROFILE_NAME: ${{ secrets.IOS_PROVISIONING_PROFILE_NAME }}
+        run: |
+          cat > ios/ExportOptions.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store</string>
+            <key>signingStyle</key><string>manual</string>
+            <key>teamID</key><string>${TEAM_ID}</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>${BUNDLE_ID}</key><string>${PROFILE_NAME}</string>
+            </dict>
+            <key>uploadBitcode</key><false/>
+            <key>uploadSymbols</key><true/>
+          </dict>
+          </plist>
+          EOF
+
+      # Compile the Flutter/SPM side unsigned, then archive + export with
+      # xcodebuild so manual-signing settings (passed on the command line)
+      # override the project's automatic-signing defaults.
+      - name: Build signed IPA
+        env:
+          TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+          PROFILE_NAME: ${{ secrets.IOS_PROVISIONING_PROFILE_NAME }}
+        run: |
+          flutter build ios --release --no-codesign
+          xcodebuild -workspace ios/Runner.xcworkspace \
+            -scheme Runner -configuration Release \
+            -archivePath "$RUNNER_TEMP/Runner.xcarchive" archive \
+            -allowProvisioningUpdates \
+            DEVELOPMENT_TEAM="$TEAM_ID" \
+            CODE_SIGN_STYLE=Manual \
+            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
+            CODE_SIGN_IDENTITY="Apple Distribution"
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
+            -exportOptionsPlist ios/ExportOptions.plist \
+            -exportPath "$RUNNER_TEMP/ipa"
+
+      - name: Upload to TestFlight
+        uses: apple-actions/upload-testflight-build@v3
+        with:
+          app-path: ${{ runner.temp }}/ipa/*.ipa
+          issuer-id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          api-key-id: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          api-private-key: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
