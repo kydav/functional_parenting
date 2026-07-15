@@ -4,8 +4,12 @@ name: Android — Deploy
 on:
   workflow_dispatch:
     inputs:
+      upload_to_play:
+        description: Also upload to Google Play (leave off to just get the AAB artifact)
+        type: boolean
+        default: false
       track:
-        description: Google Play track to release to
+        description: Google Play track (only used when uploading to Play)
         type: choice
         default: internal
         options: [internal, alpha, beta, production]
@@ -16,7 +20,10 @@ on:
 #   ANDROID_KEYSTORE_PASSWORD   keystore (store) password
 #   ANDROID_KEY_ALIAS           key alias
 #   ANDROID_KEY_PASSWORD        key password
-#   PLAY_SERVICE_ACCOUNT_JSON   Play Console service-account JSON (plaintext)
+#   PLAY_SERVICE_ACCOUNT_JSON   Play Console service-account JSON (only for upload)
+# ─────────────────────────────────────────────────────────────────────────────
+# The signed .aab is always published as a workflow artifact. Uploading to the
+# Play Console is opt-in (the very first release must be uploaded by hand).
 # ─────────────────────────────────────────────────────────────────────────────
 
 jobs:
@@ -69,7 +76,15 @@ jobs:
       - name: Build App Bundle
         run: flutter build appbundle --release
 
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-aab
+          path: build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+
       - name: Upload to Google Play
+        if: ${{ inputs.upload_to_play }}
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}

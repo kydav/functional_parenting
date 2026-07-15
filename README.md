@@ -71,8 +71,12 @@ Two GitHub Actions workflows (`.github/workflows/`), both **manual-trigger only*
 (`workflow_dispatch`) — they do **not** run on push/PR. Run them from the
 repo's **Actions** tab.
 
-- **android.yml** → builds a signed **App Bundle** and uploads to **Google Play**
-  (track selectable: internal / alpha / beta / production).
+- **android.yml** → builds a signed **App Bundle**, always publishes it as a
+  downloadable **`app-release-aab`** artifact, and *optionally* uploads to
+  **Google Play** when the `upload_to_play` input is checked (track selectable:
+  internal / alpha / beta / production). Leave it unchecked to just grab the AAB
+  and upload it to the Play Console by hand — which is required for the very
+  first release anyway.
 - **ios.yml** → builds a signed **IPA** and uploads to **TestFlight**.
 
 ### Required repo secrets
