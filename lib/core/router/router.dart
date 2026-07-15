@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/admin/presentation/admin_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/learn/presentation/learn_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
@@ -13,6 +14,7 @@ import '../../features/tools/presentation/scripts_screen.dart';
 import '../../features/tools/presentation/tools_screen.dart';
 import '../../features/workshops/presentation/workshops_screen.dart';
 import '../presentation/app_shell.dart';
+import '../providers/admin_provider.dart';
 import '../providers/auth_provider.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -25,12 +27,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       final onLogin = state.matchedLocation == '/login';
       if (!loggedIn && !onLogin) return '/login';
       if (loggedIn && onLogin) return '/today';
+      // Admin CMS is gated to admins.
+      if (state.matchedLocation == '/admin' && !ref.read(isAdminProvider)) {
+        return '/today';
+      }
       return null;
     },
     routes: [
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       // Full-screen "Reset Right Now" experience — outside the shell chrome.
       GoRoute(path: '/reset', builder: (context, state) => const ResetScreen()),
+      // Admin content CMS — full screen, gated in redirect above.
+      GoRoute(path: '/admin', builder: (context, state) => const AdminScreen()),
       ShellRoute(
         builder: (context, state, child) =>
             AppShell(location: state.matchedLocation, child: child),

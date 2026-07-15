@@ -1,127 +1,153 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/content.dart';
+import '../services/content_repository.dart';
+import '../services/firebase_bootstrap.dart';
 
 /// ── Seed content ────────────────────────────────────────────────────────────
-/// Placeholder library so the free tier is fully navigable before the CMS
-/// (Firestore) is wired up. Copy is illustrative and should be replaced with
-/// the founder's real material.
+/// Bundled starter library. Used as the fallback when Firestore is unavailable
+/// or a collection is empty, and as the payload for the one-tap "seed" action
+/// in the admin CMS. Copy is illustrative — replace with the founder's material
+/// (either here, or by editing in the app once seeded).
 
-const _tips = <ParentingTip>[
+const kSeedTips = <ParentingTip>[
   ParentingTip(
     id: 't1',
+    order: 0,
     text:
         'Behavior is communication. Before you correct it, ask what it is trying to tell you.',
   ),
   ParentingTip(
     id: 't2',
+    order: 1,
     text:
         'Connect before you direct — a regulated child hears you; a flooded one cannot.',
   ),
   ParentingTip(
     id: 't3',
+    order: 2,
     text:
         'Name the feeling out loud. "You are really frustrated" lowers the temperature faster than "calm down."',
   ),
   ParentingTip(
     id: 't4',
+    order: 3,
     text:
         'Give the transition a countdown. Surprise endings feel like losses to a child.',
   ),
   ParentingTip(
     id: 't5',
+    order: 4,
     text:
         'Praise the effort, not the outcome. Effort is the thing they can repeat tomorrow.',
   ),
   ParentingTip(
     id: 't6',
+    order: 5,
     text:
         'A consequence teaches best when it is small, immediate, and predictable — not big and delayed.',
   ),
   ParentingTip(
     id: 't7',
+    order: 6,
     text:
         'Your calm is the intervention. Regulate yourself first, then the room follows.',
   ),
 ];
 
-const _challenges = <ParentingChallenge>[
+const kSeedChallenges = <ParentingChallenge>[
   ParentingChallenge(
     id: 'c1',
+    order: 0,
     title: 'One-on-one ten',
     description:
         'Spend ten uninterrupted, phone-free minutes today letting your child lead the play.',
   ),
   ParentingChallenge(
     id: 'c2',
+    order: 1,
     title: 'Catch them being good',
     description:
         'Notice and name three positive behaviors out loud before dinner.',
   ),
   ParentingChallenge(
     id: 'c3',
+    order: 2,
     title: 'The pause',
     description:
         'Next time you feel the urge to react, take one slow breath before you respond.',
   ),
   ParentingChallenge(
     id: 'c4',
+    order: 3,
     title: 'Ask, don\'t tell',
     description: 'Replace one command today with a curious question.',
   ),
   ParentingChallenge(
     id: 'c5',
+    order: 4,
     title: 'Name it to tame it',
     description:
         'Label your child\'s emotion once today before offering any solution.',
   ),
   ParentingChallenge(
     id: 'c6',
+    order: 5,
     title: 'Repair',
     description:
         'If a moment goes sideways, circle back later and reconnect. Repair is the lesson.',
   ),
   ParentingChallenge(
     id: 'c7',
+    order: 6,
     title: 'Predictable transition',
     description: 'Give a five-minute warning before every transition today.',
   ),
 ];
 
-const _reflections = <ReflectionPrompt>[
+const kSeedReflections = <ReflectionPrompt>[
   ReflectionPrompt(
     id: 'r1',
+    order: 0,
     prompt: 'When did I feel most connected to my child today?',
   ),
   ReflectionPrompt(
     id: 'r2',
+    order: 1,
     prompt: 'What triggered me today, and what was underneath it?',
   ),
   ReflectionPrompt(
     id: 'r3',
+    order: 2,
     prompt: 'What was my child\'s behavior trying to communicate?',
   ),
   ReflectionPrompt(
     id: 'r4',
+    order: 3,
     prompt: 'Where did I respond instead of react? How did it go?',
   ),
   ReflectionPrompt(
     id: 'r5',
+    order: 4,
     prompt: 'What is one thing I want to do differently tomorrow?',
   ),
   ReflectionPrompt(
     id: 'r6',
+    order: 5,
     prompt: 'What did I handle well today that I want to remember?',
   ),
   ReflectionPrompt(
     id: 'r7',
+    order: 6,
     prompt: 'When did I model the calm I want my child to learn?',
   ),
 ];
 
-const _scripts = <Script>[
+const kSeedScripts = <Script>[
   Script(
     id: 's1',
+    order: 0,
     situation: 'Refusing to leave somewhere fun',
     category: 'Transitions',
     script:
@@ -131,6 +157,7 @@ const _scripts = <Script>[
   ),
   Script(
     id: 's2',
+    order: 1,
     situation: 'Big meltdown in public',
     category: 'Big feelings',
     script:
@@ -140,6 +167,7 @@ const _scripts = <Script>[
   ),
   Script(
     id: 's3',
+    order: 2,
     situation: 'Not listening to a request',
     category: 'Cooperation',
     script:
@@ -149,6 +177,7 @@ const _scripts = <Script>[
   ),
   Script(
     id: 's4',
+    order: 3,
     situation: 'Sibling conflict',
     category: 'Cooperation',
     script:
@@ -158,6 +187,7 @@ const _scripts = <Script>[
   ),
   Script(
     id: 's5',
+    order: 4,
     situation: 'Bedtime stalling',
     category: 'Transitions',
     script:
@@ -167,35 +197,80 @@ const _scripts = <Script>[
   ),
 ];
 
-/// Simple deterministic "index for today" so every user sees the same daily
-/// item and it rotates once per day.
+/// ── Repository ───────────────────────────────────────────────────────────────
+
+final contentRepositoryProvider = Provider<ContentRepository?>((ref) {
+  if (!firebaseReady) return null;
+  return ContentRepository(FirebaseFirestore.instance);
+});
+
+/// ── Live streams (all items incl. inactive — used by the admin CMS) ──────────
+
+final tipsStreamProvider = StreamProvider<List<ParentingTip>>((ref) {
+  final repo = ref.watch(contentRepositoryProvider);
+  return repo?.watchTips() ?? Stream.value(kSeedTips);
+});
+
+final challengesStreamProvider = StreamProvider<List<ParentingChallenge>>((
+  ref,
+) {
+  final repo = ref.watch(contentRepositoryProvider);
+  return repo?.watchChallenges() ?? Stream.value(kSeedChallenges);
+});
+
+final reflectionsStreamProvider = StreamProvider<List<ReflectionPrompt>>((ref) {
+  final repo = ref.watch(contentRepositoryProvider);
+  return repo?.watchReflections() ?? Stream.value(kSeedReflections);
+});
+
+final scriptsStreamProvider = StreamProvider<List<Script>>((ref) {
+  final repo = ref.watch(contentRepositoryProvider);
+  return repo?.watchScripts() ?? Stream.value(kSeedScripts);
+});
+
+/// ── Resolved, app-facing lists ───────────────────────────────────────────────
+/// Active items only, with a synchronous fallback to the seed so the app is
+/// never blank (during load, offline, before seeding, or in demo mode).
+
+List<T> _resolve<T extends CmsItem>(AsyncValue<List<T>> async, List<T> seed) {
+  final live = async.value;
+  if (live == null || live.isEmpty) return seed;
+  final active = live.where((e) => e.active).toList();
+  return active.isEmpty ? seed : active;
+}
+
+final tipsProvider = Provider<List<ParentingTip>>(
+  (ref) => _resolve(ref.watch(tipsStreamProvider), kSeedTips),
+);
+final challengesProvider = Provider<List<ParentingChallenge>>(
+  (ref) => _resolve(ref.watch(challengesStreamProvider), kSeedChallenges),
+);
+final reflectionsProvider = Provider<List<ReflectionPrompt>>(
+  (ref) => _resolve(ref.watch(reflectionsStreamProvider), kSeedReflections),
+);
+final scriptsProvider = Provider<List<Script>>(
+  (ref) => _resolve(ref.watch(scriptsStreamProvider), kSeedScripts),
+);
+
+/// ── Daily selection (deterministic per day) ──────────────────────────────────
+
 int _dayIndex(int length) {
+  if (length == 0) return 0;
   final epochDay = DateTime.now().toUtc().millisecondsSinceEpoch ~/ 86400000;
   return epochDay % length;
 }
 
-// ── Providers (the seam for future Firestore-backed content) ─────────────────
-
-final allTipsProvider = Provider<List<ParentingTip>>((_) => _tips);
-final allChallengesProvider = Provider<List<ParentingChallenge>>(
-  (_) => _challenges,
-);
-final allReflectionsProvider = Provider<List<ReflectionPrompt>>(
-  (_) => _reflections,
-);
-final scriptsProvider = Provider<List<Script>>((_) => _scripts);
-
 final dailyTipProvider = Provider<ParentingTip>((ref) {
-  final tips = ref.watch(allTipsProvider);
+  final tips = ref.watch(tipsProvider);
   return tips[_dayIndex(tips.length)];
 });
 
 final dailyChallengeProvider = Provider<ParentingChallenge>((ref) {
-  final items = ref.watch(allChallengesProvider);
+  final items = ref.watch(challengesProvider);
   return items[_dayIndex(items.length)];
 });
 
 final dailyReflectionProvider = Provider<ReflectionPrompt>((ref) {
-  final items = ref.watch(allReflectionsProvider);
+  final items = ref.watch(reflectionsProvider);
   return items[_dayIndex(items.length)];
 });

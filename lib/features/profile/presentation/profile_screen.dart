@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/presentation/widgets.dart';
+import '../../../core/providers/admin_provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/theme/app_theme.dart';
 
@@ -11,6 +13,7 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authNotifierProvider);
+    final isAdmin = ref.watch(isAdminProvider);
 
     return PageBody(
       child: Column(
@@ -105,6 +108,17 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 24),
+
+          if (isAdmin) ...[
+            const Eyebrow('Founder tools'),
+            const SizedBox(height: 10),
+            _SettingsTile(
+              icon: Icons.edit_note_rounded,
+              label: 'Content CMS',
+              onTap: () => context.push('/admin'),
+            ),
+            const SizedBox(height: 24),
+          ],
 
           const Eyebrow('Settings'),
           const SizedBox(height: 10),

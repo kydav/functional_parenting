@@ -1,0 +1,32 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Admins may write content. Keep this list in sync with kAdminEmails in
+    // lib/core/providers/admin_provider.dart.
+    // TODO: add the founder's email.
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email in [
+          'ky.s.dav@gmail.com'
+        ];
+    }
+
+    // CMS-managed content: world-readable (public content), admin-only writes.
+    match /tips/{doc}        { allow read: if true; allow write: if isAdmin(); }
+    match /challenges/{doc}  { allow read: if true; allow write: if isAdmin(); }
+    match /reflections/{doc} { allow read: if true; allow write: if isAdmin(); }
+    match /scripts/{doc}     { allow read: if true; allow write: if isAdmin(); }
+
+    // Per-user private data (streaks, saved reflections) — owner only.
+    match /users/{uid}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Default deny.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

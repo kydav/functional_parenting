@@ -80,8 +80,33 @@ base64 -i android/app/google-services.json | pbcopy      # -> GOOGLE_SERVICES_JS
 base64 -i ios/Runner/GoogleService-Info.plist | pbcopy   # -> GOOGLE_SERVICE_INFO_PLIST
 ```
 
+## Content CMS (Firestore-backed)
+
+Tips, challenges, reflections, and scripts live in Firestore collections
+(`tips`, `challenges`, `reflections`, `scripts`) and are edited in-app.
+
+- **Repository:** `core/services/content_repository.dart` (streams + CRUD + seed).
+- **Providers:** `core/providers/content_provider.dart` — stream providers for the
+  admin lists, plus resolved `tipsProvider`/etc. that show **active** items and
+  fall back to the bundled seed content when Firestore is empty/offline/demo, so
+  the app is never blank.
+- **Admin UI:** `features/admin/presentation/admin_screen.dart` — tabbed editor
+  (add / edit / delete / show-hide / reorder via `order`) reachable from
+  **Profile → Founder tools → Content CMS**. Includes a one-tap **Seed starter
+  content** action that pushes the bundled library into any empty collection.
+- **Access:** gated by `core/providers/admin_provider.dart` (email allowlist;
+  demo mode counts as admin for local testing). Enforced server-side by
+  `firestore.rules` — **public read, admin-only write**.
+
+Keep the allowlist in `admin_provider.dart` and `firestore.rules` in sync, and
+**add the founder's email to both**. Deploy rules with:
+
+```bash
+firebase deploy --only firestore:rules
+```
+
 ## Roadmap (post-scaffold)
-- Firebase Auth + Firestore-backed content (CMS for tips/challenges/scripts)
+- Firebase Auth wired to real accounts (done; admin allowlist for the founder)
 - Push notifications for daily tip / challenge
 - Streaks & progress persistence (`shared_preferences` dep already added)
 - Paid tiers: Starter Toolkit + self-paced course (in-app purchases / RevenueCat)
