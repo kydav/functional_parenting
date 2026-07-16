@@ -82,7 +82,7 @@ class _LockedTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ToolTile(
       icon: Icons.lock_outline_rounded,
-      iconColor: kTextSecondary,
+      iconColor: context.colors.textSecondary,
       title: title,
       subtitle: subtitle,
       trailing: const ProBadge(),

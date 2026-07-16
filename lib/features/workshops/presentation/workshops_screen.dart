@@ -45,7 +45,7 @@ class WorkshopsScreen extends StatelessWidget {
 
           // Book a free call — the primary lead-gen CTA.
           SoftCard(
-            color: kNavy,
+            color: context.colors.brandFill,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -157,13 +157,13 @@ class _MetaRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: kTextSecondary),
+        Icon(icon, size: 16, color: context.colors.textSecondary),
         const SizedBox(width: 8),
         Text(
           text,
           style: Theme.of(
             context,
-          ).textTheme.bodyMedium?.copyWith(color: kTextSecondary),
+          ).textTheme.bodyMedium?.copyWith(color: context.colors.textSecondary),
         ),
       ],
     );

@@ -4,6 +4,7 @@ import 'package:functional_parenting/core/presentation/widgets.dart';
 import 'package:functional_parenting/core/providers/admin_provider.dart';
 import 'package:functional_parenting/core/providers/auth_provider.dart';
 import 'package:functional_parenting/core/providers/engagement_provider.dart';
+import 'package:functional_parenting/core/providers/theme_provider.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -17,6 +18,7 @@ class ProfileScreen extends ConsumerWidget {
     final isAdmin = ref.watch(isAdminProvider);
     final notif = ref.watch(notificationSettingsProvider);
     final notifCtrl = ref.read(notificationSettingsProvider.notifier);
+    final themeMode = ref.watch(themeModeProvider);
 
     return PageBody(
       child: Column(
@@ -59,9 +61,9 @@ class ProfileScreen extends ConsumerWidget {
                   children: [
                     Text(
                       'Sign Out',
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodyMedium?.copyWith(color: Colors.black),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: context.colors.textPrimary,
+                      ),
                     ),
                     const SizedBox(width: 4),
                     const Icon(Icons.logout_rounded, color: Colors.red),
@@ -74,7 +76,7 @@ class ProfileScreen extends ConsumerWidget {
 
           // Upgrade card — the paid tiers live here.
           SoftCard(
-            color: kNavy,
+            color: context.colors.brandFill,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -157,6 +159,17 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ),
           _SettingsTile(
+            icon: Icons.brightness_6_outlined,
+            label: 'Appearance',
+            trailing: Text(
+              _themeLabel(themeMode),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: context.colors.textSecondary,
+              ),
+            ),
+            onTap: () => _pickTheme(context, ref, themeMode),
+          ),
+          _SettingsTile(
             icon: Icons.lock_outline_rounded,
             label: 'Account & password',
             onTap: () => context.push('/account'),
@@ -175,6 +188,45 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+String _themeLabel(ThemeMode mode) => switch (mode) {
+  ThemeMode.system => 'System',
+  ThemeMode.light => 'Light',
+  ThemeMode.dark => 'Dark',
+};
+
+void _pickTheme(BuildContext context, WidgetRef ref, ThemeMode current) {
+  showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: context.colors.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (sheetContext) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 12),
+          for (final mode in ThemeMode.values)
+            ListTile(
+              title: Text(_themeLabel(mode)),
+              trailing: current == mode
+                  ? Icon(
+                      Icons.check_rounded,
+                      color: Theme.of(context).colorScheme.primary,
+                    )
+                  : null,
+              onTap: () {
+                ref.read(themeModeProvider.notifier).set(mode);
+                Navigator.pop(sheetContext);
+              },
+            ),
+          const SizedBox(height: 12),
+        ],
+      ),
+    ),
+  );
 }
 
 class _PlanRow extends StatelessWidget {
@@ -256,21 +308,21 @@ class _SettingsTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         child: Row(
           children: [
-            Icon(icon, size: 20, color: kTextPrimary),
+            Icon(icon, size: 20, color: context.colors.textPrimary),
             const SizedBox(width: 14),
             Expanded(
               child: Text(
                 label,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(color: kTextPrimary),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: context.colors.textPrimary,
+                ),
               ),
             ),
             trailing ??
                 (onTap != null
-                    ? const Icon(
+                    ? Icon(
                         Icons.chevron_right_rounded,
-                        color: kTextSecondary,
+                        color: context.colors.textSecondary,
                       )
                     : const SizedBox()),
           ],

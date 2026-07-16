@@ -46,7 +46,7 @@ class LearnScreen extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           SoftCard(
-            color: kNavy,
+            color: context.colors.brandFill,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

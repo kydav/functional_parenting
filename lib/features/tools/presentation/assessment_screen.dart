@@ -55,7 +55,7 @@ class AssessmentScreen extends HookWidget {
                   Text(
                     'Think of one behavior you want to understand. How true is each statement?',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: kTextSecondary,
+                      color: context.colors.textSecondary,
                       height: 1.5,
                     ),
                   ),
@@ -83,14 +83,16 @@ class AssessmentScreen extends HookWidget {
                                   selected: selected,
                                   showCheckmark: false,
                                   selectedColor: kNavy,
-                                  backgroundColor: kBgPage,
+                                  backgroundColor: context.colors.pageBg,
                                   labelStyle: TextStyle(
                                     color: selected
                                         ? Colors.white
-                                        : kTextPrimary,
+                                        : context.colors.textPrimary,
                                     fontSize: 12,
                                   ),
-                                  side: const BorderSide(color: kBorderColor),
+                                  side: BorderSide(
+                                    color: context.colors.border,
+                                  ),
                                   onSelected: (_) {
                                     final next = [...answers.value];
                                     next[i] = v;
@@ -189,7 +191,7 @@ class _Result extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: maxScore == 0 ? 0 : e.value / maxScore,
                       minHeight: 10,
-                      backgroundColor: kBorderColor,
+                      backgroundColor: context.colors.border,
                       color: e.key == top ? kNavy : kBlue,
                     ),
                   ),

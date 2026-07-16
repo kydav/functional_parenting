@@ -66,9 +66,9 @@ class TodayScreen extends HookConsumerWidget {
                   children: [
                     Text(
                       _greeting(),
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodyMedium?.copyWith(color: kTextSecondary),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: context.colors.textSecondary,
+                      ),
                     ),
                     Text(
                       'Hi ${_firstName(name)} 👋',
@@ -84,7 +84,7 @@ class TodayScreen extends HookConsumerWidget {
 
           // Reset Right Now — the emergency regulation button.
           SoftCard(
-            color: kNavy,
+            color: context.colors.brandFill,
             onTap: () => context.push('/reset'),
             child: Row(
               children: [
@@ -130,7 +130,7 @@ class TodayScreen extends HookConsumerWidget {
           const Eyebrow("Today's tip", icon: Icons.lightbulb_outline),
           const SizedBox(height: 8),
           SoftCard(
-            color: const Color(0xFFF3F6F8),
+            color: context.colors.surfaceAlt,
             child: Text(
               tip.text,
               style: Theme.of(

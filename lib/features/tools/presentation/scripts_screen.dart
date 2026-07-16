@@ -22,7 +22,7 @@ class ScriptsScreen extends ConsumerWidget {
             Text(
               'Calm, ready-to-use words for common moments. Tap to see the reasoning behind each one.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: kTextSecondary,
+                color: context.colors.textSecondary,
                 height: 1.5,
               ),
             ),
@@ -80,7 +80,7 @@ class _ScriptCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: kBgPage,
+                color: context.colors.pageBg,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(

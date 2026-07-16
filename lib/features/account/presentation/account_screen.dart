@@ -142,10 +142,10 @@ class AccountScreen extends HookConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.email_outlined,
                     size: 20,
-                    color: kTextSecondary,
+                    color: context.colors.textSecondary,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -168,7 +168,7 @@ class AccountScreen extends HookConsumerWidget {
                   Text(
                     "We'll email you a secure link to reset your password.",
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: kTextSecondary,
+                      color: context.colors.textSecondary,
                       height: 1.5,
                     ),
                   ),
@@ -218,7 +218,7 @@ class _SettingsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = danger ? Colors.red : kTextPrimary;
+    final color = danger ? Colors.red : context.colors.textPrimary;
     return SoftCard(
       onTap: onTap,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -234,7 +234,10 @@ class _SettingsRow extends StatelessWidget {
               ).textTheme.titleMedium?.copyWith(color: color),
             ),
           ),
-          const Icon(Icons.chevron_right_rounded, color: kTextSecondary),
+          Icon(
+            Icons.chevron_right_rounded,
+            color: context.colors.textSecondary,
+          ),
         ],
       ),
     );

@@ -128,9 +128,9 @@ class DecisionToolScreen extends HookWidget {
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                         ),
-                        const Icon(
+                        Icon(
                           Icons.chevron_right_rounded,
-                          color: kTextSecondary,
+                          color: context.colors.textSecondary,
                         ),
                       ],
                     ),

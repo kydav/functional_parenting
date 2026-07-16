@@ -24,13 +24,13 @@ class AdminScreen extends HookConsumerWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Content CMS'),
-          bottom: const TabBar(
+          bottom: TabBar(
             isScrollable: true,
             tabAlignment: TabAlignment.start,
-            labelColor: kNavy,
-            unselectedLabelColor: kTextSecondary,
-            indicatorColor: kNavy,
-            tabs: [
+            labelColor: context.colors.textPrimary,
+            unselectedLabelColor: context.colors.textSecondary,
+            indicatorColor: Theme.of(context).colorScheme.primary,
+            tabs: const [
               Tab(text: 'Tips'),
               Tab(text: 'Challenges'),
               Tab(text: 'Reflections'),
@@ -129,7 +129,7 @@ class _ItemCard extends StatelessWidget {
             Switch(value: active, onChanged: onToggle, activeThumbColor: kNavy),
             IconButton(
               icon: const Icon(Icons.delete_outline_rounded, size: 20),
-              color: kTextSecondary,
+              color: context.colors.textSecondary,
               onPressed: onDelete,
               tooltip: 'Delete',
             ),
@@ -151,7 +151,7 @@ class _TabScaffold<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kBgPage,
+      backgroundColor: context.colors.pageBg,
       floatingActionButton: onAdd == null
           ? null
           : FloatingActionButton.extended(
@@ -209,7 +209,7 @@ void _openSheet(BuildContext context, Widget child) {
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Colors.white,
+    backgroundColor: context.colors.surface,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),

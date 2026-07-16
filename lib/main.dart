@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:functional_parenting/core/providers/engagement_provider.dart';
+import 'package:functional_parenting/core/providers/theme_provider.dart';
 import 'package:functional_parenting/core/router/router.dart';
 import 'package:functional_parenting/core/services/notification_service.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
@@ -34,11 +35,14 @@ class FunctionalParentingApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
+    final themeMode = ref.watch(themeModeProvider);
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: MaterialApp.router(
         title: 'Functional Parenting',
         theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        themeMode: themeMode,
         routerConfig: router,
         debugShowCheckedModeBanner: false,
       ),

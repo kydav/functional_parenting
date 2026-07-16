@@ -41,9 +41,9 @@ class SectionHeader extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             subtitle!,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: kTextSecondary),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: context.colors.textSecondary,
+            ),
           ),
         ],
       ],
@@ -71,9 +71,9 @@ class SoftCard extends StatelessWidget {
       width: double.infinity,
       padding: padding,
       decoration: BoxDecoration(
-        color: color ?? Colors.white,
+        color: color ?? context.colors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: kBorderColor),
+        border: Border.all(color: context.colors.border),
       ),
       child: child,
     );
@@ -164,7 +164,10 @@ class ToolTile extends StatelessWidget {
             ),
           ),
           trailing ??
-              const Icon(Icons.chevron_right_rounded, color: kTextSecondary),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: context.colors.textSecondary,
+              ),
         ],
       ),
     );

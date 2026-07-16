@@ -132,7 +132,7 @@ class _DesktopShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kBgPage,
+      backgroundColor: context.colors.pageBg,
       body: Row(
         children: [
           _Sidebar(location: location),
@@ -291,7 +291,7 @@ class _MobileShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
-      backgroundColor: kBgPage,
+      backgroundColor: context.colors.pageBg,
       body: SafeArea(bottom: false, child: child),
       bottomNavigationBar: SafeArea(
         child: Padding(
