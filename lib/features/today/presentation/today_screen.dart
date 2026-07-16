@@ -1,12 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:functional_parenting/core/presentation/widgets.dart';
 import 'package:functional_parenting/core/providers/auth_provider.dart';
 import 'package:functional_parenting/core/providers/content_provider.dart';
+import 'package:functional_parenting/core/providers/engagement_provider.dart';
+import 'package:functional_parenting/core/services/notification_service.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-class TodayScreen extends ConsumerWidget {
+class TodayScreen extends HookConsumerWidget {
   const TodayScreen({super.key});
 
   @override
@@ -15,20 +20,65 @@ class TodayScreen extends ConsumerWidget {
     final tip = ref.watch(dailyTipProvider);
     final challenge = ref.watch(dailyChallengeProvider);
     final reflection = ref.watch(dailyReflectionProvider);
+    final engagement = ref.watch(engagementProvider);
+
+    final reflectionCtrl = useTextEditingController(
+      text: engagement.reflectionToday,
+    );
+    final debounce = useRef<Timer?>(null);
+    useEffect(
+      () =>
+          () => debounce.value?.cancel(),
+      const [],
+    );
+
+    // Contextually request notification permission once we're in the app (the
+    // toggles default on). Idempotent — iOS/Android won't re-prompt after the
+    // first decision; if granted we (re)apply the saved schedules.
+    useEffect(() {
+      Future.microtask(() async {
+        final settings = ref.read(notificationSettingsProvider);
+        if (!settings.tipEnabled && !settings.challengeEnabled) return;
+        if (await NotificationService.instance.requestPermission()) {
+          await ref.read(notificationSettingsProvider.notifier).applyOnLaunch();
+        }
+      });
+      return null;
+    }, const []);
+
+    void onReflectionChanged(String value) {
+      debounce.value?.cancel();
+      debounce.value = Timer(const Duration(milliseconds: 600), () {
+        ref.read(engagementProvider.notifier).saveReflection(value);
+      });
+    }
 
     return PageBody(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            _greeting(),
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: kTextSecondary),
-          ),
-          Text(
-            'Hi ${_firstName(name)} 👋',
-            style: Theme.of(context).textTheme.headlineLarge,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _greeting(),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.copyWith(color: kTextSecondary),
+                    ),
+                    Text(
+                      'Hi ${_firstName(name)} 👋',
+                      style: Theme.of(context).textTheme.headlineLarge,
+                    ),
+                  ],
+                ),
+              ),
+              if (engagement.streak > 0) _StreakChip(streak: engagement.streak),
+            ],
           ),
           const SizedBox(height: 20),
 
@@ -114,18 +164,26 @@ class TodayScreen extends ConsumerWidget {
                 const SizedBox(height: 14),
                 Row(
                   children: [
-                    OutlinedButton.icon(
-                      onPressed: () =>
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Nice — challenge marked done for today.',
-                              ),
-                            ),
-                          ),
-                      icon: const Icon(Icons.check_rounded, size: 18),
-                      label: const Text('Mark done'),
-                    ),
+                    if (engagement.challengeDoneToday)
+                      FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: kSuccessGreen,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () => ref
+                            .read(engagementProvider.notifier)
+                            .setChallengeDone(done: false),
+                        icon: const Icon(Icons.check_circle, size: 18),
+                        label: const Text('Done today'),
+                      )
+                    else
+                      OutlinedButton.icon(
+                        onPressed: () => ref
+                            .read(engagementProvider.notifier)
+                            .setChallengeDone(done: true),
+                        icon: const Icon(Icons.check_rounded, size: 18),
+                        label: const Text('Mark done'),
+                      ),
                   ],
                 ),
               ],
@@ -133,10 +191,7 @@ class TodayScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 20),
 
-          const Eyebrow(
-            'Daily reflection',
-            icon: Icons.edit_note_rounded,
-          ),
+          const Eyebrow('Daily reflection', icon: Icons.edit_note_rounded),
           const SizedBox(height: 8),
           SoftCard(
             child: Column(
@@ -149,9 +204,11 @@ class TodayScreen extends ConsumerWidget {
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 12),
-                const TextField(
+                TextField(
+                  controller: reflectionCtrl,
+                  onChanged: onReflectionChanged,
                   maxLines: 3,
-                  decoration: InputDecoration(hintText: 'Take a moment…'),
+                  decoration: const InputDecoration(hintText: 'Take a moment…'),
                 ),
               ],
             ),
@@ -178,4 +235,28 @@ class TodayScreen extends ConsumerWidget {
   }
 
   String _firstName(String name) => name.trim().split(' ').first;
+}
+
+class _StreakChip extends StatelessWidget {
+  final int streak;
+  const _StreakChip({required this.streak});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: kSage.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(99),
+      ),
+      child: Text(
+        '🔥 $streak-day streak',
+        style: const TextStyle(
+          color: kNavy,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
 }

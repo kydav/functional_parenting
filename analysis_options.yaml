@@ -6,6 +6,7 @@ analyzer:
     - "generated_plugin_registrant.dart"
     - "**/cache/**"
     - "**/.dart_tool/**"
+    - "build/**"
     - "ios/build/**"
 
 linter:

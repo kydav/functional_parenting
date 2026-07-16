@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:functional_parenting/core/presentation/widgets.dart';
 import 'package:functional_parenting/core/providers/admin_provider.dart';
 import 'package:functional_parenting/core/providers/auth_provider.dart';
+import 'package:functional_parenting/core/providers/engagement_provider.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -14,6 +15,8 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authNotifierProvider);
     final isAdmin = ref.watch(isAdminProvider);
+    final notif = ref.watch(notificationSettingsProvider);
+    final notifCtrl = ref.read(notificationSettingsProvider.notifier);
 
     return PageBody(
       child: Column(
@@ -140,12 +143,18 @@ class ProfileScreen extends ConsumerWidget {
           _SettingsTile(
             icon: Icons.notifications_outlined,
             label: 'Daily tip notifications',
-            trailing: Switch(value: true, onChanged: (_) {}),
+            trailing: Switch(
+              value: notif.tipEnabled,
+              onChanged: (v) => notifCtrl.setTipEnabled(value: v),
+            ),
           ),
           _SettingsTile(
             icon: Icons.emoji_events_outlined,
             label: 'Daily challenge reminders',
-            trailing: Switch(value: true, onChanged: (_) {}),
+            trailing: Switch(
+              value: notif.challengeEnabled,
+              onChanged: (v) => notifCtrl.setChallengeEnabled(value: v),
+            ),
           ),
           _SettingsTile(
             icon: Icons.lock_outline_rounded,

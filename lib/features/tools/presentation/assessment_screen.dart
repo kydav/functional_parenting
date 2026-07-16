@@ -22,10 +22,7 @@ class AssessmentScreen extends HookWidget {
       "It happens when they can't have a specific item or activity.",
       'Tangible',
     ),
-    (
-      "It appears when they're tired, hungry, or overstimulated.",
-      'Regulation',
-    ),
+    ("It appears when they're tired, hungry, or overstimulated.", 'Regulation'),
     ('It fades quickly once I give attention or connection.', 'Attention'),
     ('It stops as soon as the demand is removed.', 'Escape'),
   ];
@@ -157,10 +154,7 @@ class _Result extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Eyebrow(
-          'Your likely pattern',
-          icon: Icons.insights_rounded,
-        ),
+        const Eyebrow('Your likely pattern', icon: Icons.insights_rounded),
         const SizedBox(height: 10),
         Text(top, style: Theme.of(context).textTheme.headlineLarge),
         const SizedBox(height: 12),
