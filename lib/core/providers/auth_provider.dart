@@ -56,6 +56,20 @@ class AuthNotifier extends ChangeNotifier {
     await _auth!.sendPasswordResetEmail(email: email);
   }
 
+  Future<void> updateDisplayName(String name) async {
+    await _auth!.currentUser?.updateDisplayName(name.trim());
+    await _auth!.currentUser?.reload();
+    notifyListeners();
+  }
+
+  /// Deletes the signed-in user. May throw a `requires-recent-login`
+  /// FirebaseAuthException if the session is old — the caller should ask the
+  /// user to sign in again and retry.
+  Future<void> deleteAccount() async {
+    await _auth!.currentUser?.delete();
+    notifyListeners();
+  }
+
   Future<void> signOut() async {
     await _auth!.signOut();
   }

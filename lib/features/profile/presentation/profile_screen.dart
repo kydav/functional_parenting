@@ -159,7 +159,7 @@ class ProfileScreen extends ConsumerWidget {
           _SettingsTile(
             icon: Icons.lock_outline_rounded,
             label: 'Account & password',
-            onTap: () {},
+            onTap: () => context.push('/account'),
           ),
           _SettingsTile(
             icon: Icons.privacy_tip_outlined,
