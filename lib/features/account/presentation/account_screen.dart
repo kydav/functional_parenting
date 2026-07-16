@@ -182,14 +182,13 @@ class AccountScreen extends HookConsumerWidget {
               ),
             ),
             const SizedBox(height: 32),
-
-            const Eyebrow('Danger zone'),
-            const SizedBox(height: 10),
             _SettingsRow(
               icon: Icons.logout_rounded,
               label: 'Sign out',
               onTap: () => ref.read(authNotifierProvider).signOut(),
             ),
+            const SizedBox(height: 32),
+            const Eyebrow('Danger zone'),
             const SizedBox(height: 8),
             _SettingsRow(
               icon: Icons.delete_forever_rounded,

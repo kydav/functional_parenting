@@ -49,8 +49,25 @@ dependencies:
 dev_dependencies:
   flutter_launcher_icons: ^0.14.4
   flutter_lints: ^6.0.0
+  flutter_native_splash: ^2.4.4
   flutter_test:
     sdk: flutter
+
+# Native splash screen. Light: navy logo on near-white; dark: white/sage logo
+# on navy. Regenerate with: dart run flutter_native_splash:create
+flutter_native_splash:
+  color: "#F4F5F8"
+  color_dark: "#0A0F2C"
+  image: assets/splash/splash_light.png
+  image_dark: assets/splash/splash_dark.png
+  android_12:
+    color: "#F4F5F8"
+    color_dark: "#0A0F2C"
+    image: assets/splash/splash_light.png
+    image_dark: assets/splash/splash_dark.png
+  android: true
+  ios: true
+  web: false
 
 # App icon generation. iOS is handled manually (single-size AppIcon set with
 # light/dark/tinted appearances), so only Android is generated here.

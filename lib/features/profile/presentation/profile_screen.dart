@@ -199,6 +199,7 @@ String _themeLabel(ThemeMode mode) => switch (mode) {
 void _pickTheme(BuildContext context, WidgetRef ref, ThemeMode current) {
   showModalBottomSheet<void>(
     context: context,
+    useRootNavigator: true,
     backgroundColor: context.colors.surface,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
