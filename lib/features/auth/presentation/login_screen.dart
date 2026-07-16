@@ -38,7 +38,7 @@ class LoginScreen extends HookConsumerWidget {
     }
 
     return Scaffold(
-      backgroundColor: kNavy,
+      backgroundColor: context.colors.brandFill,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -81,7 +81,7 @@ class LoginScreen extends HookConsumerWidget {
                   Container(
                     padding: const EdgeInsets.all(22),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: context.colors.surface,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Column(
