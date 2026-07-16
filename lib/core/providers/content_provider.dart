@@ -1,9 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../models/content.dart';
-import '../services/content_repository.dart';
-import '../services/firebase_bootstrap.dart';
+import 'package:functional_parenting/core/models/content.dart';
+import 'package:functional_parenting/core/services/content_repository.dart';
 
 /// ── Seed content ────────────────────────────────────────────────────────────
 /// Bundled starter library. Used as the fallback when Firestore is unavailable
@@ -14,7 +13,6 @@ import '../services/firebase_bootstrap.dart';
 const kSeedTips = <ParentingTip>[
   ParentingTip(
     id: 't1',
-    order: 0,
     text:
         'Behavior is communication. Before you correct it, ask what it is trying to tell you.',
   ),
@@ -59,7 +57,6 @@ const kSeedTips = <ParentingTip>[
 const kSeedChallenges = <ParentingChallenge>[
   ParentingChallenge(
     id: 'c1',
-    order: 0,
     title: 'One-on-one ten',
     description:
         'Spend ten uninterrupted, phone-free minutes today letting your child lead the play.',
@@ -81,7 +78,7 @@ const kSeedChallenges = <ParentingChallenge>[
   ParentingChallenge(
     id: 'c4',
     order: 3,
-    title: 'Ask, don\'t tell',
+    title: "Ask, don't tell",
     description: 'Replace one command today with a curious question.',
   ),
   ParentingChallenge(
@@ -89,7 +86,7 @@ const kSeedChallenges = <ParentingChallenge>[
     order: 4,
     title: 'Name it to tame it',
     description:
-        'Label your child\'s emotion once today before offering any solution.',
+        "Label your child's emotion once today before offering any solution.",
   ),
   ParentingChallenge(
     id: 'c6',
@@ -109,7 +106,6 @@ const kSeedChallenges = <ParentingChallenge>[
 const kSeedReflections = <ReflectionPrompt>[
   ReflectionPrompt(
     id: 'r1',
-    order: 0,
     prompt: 'When did I feel most connected to my child today?',
   ),
   ReflectionPrompt(
@@ -120,7 +116,7 @@ const kSeedReflections = <ReflectionPrompt>[
   ReflectionPrompt(
     id: 'r3',
     order: 2,
-    prompt: 'What was my child\'s behavior trying to communicate?',
+    prompt: "What was my child's behavior trying to communicate?",
   ),
   ReflectionPrompt(
     id: 'r4',
@@ -147,7 +143,6 @@ const kSeedReflections = <ReflectionPrompt>[
 const kSeedScripts = <Script>[
   Script(
     id: 's1',
-    order: 0,
     situation: 'Refusing to leave somewhere fun',
     category: 'Transitions',
     script:
@@ -200,7 +195,6 @@ const kSeedScripts = <Script>[
 /// ── Repository ───────────────────────────────────────────────────────────────
 
 final contentRepositoryProvider = Provider<ContentRepository?>((ref) {
-  if (!firebaseReady) return null;
   return ContentRepository(FirebaseFirestore.instance);
 });
 

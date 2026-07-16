@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/presentation/widgets.dart';
-import '../../../core/theme/app_theme.dart';
+import 'package:functional_parenting/core/presentation/widgets.dart';
+import 'package:functional_parenting/core/theme/app_theme.dart';
 
 class LearnScreen extends StatelessWidget {
   const LearnScreen({super.key});
@@ -133,16 +133,16 @@ class LearnScreen extends StatelessWidget {
           const SizedBox(height: 8),
           SoftCard(
             color: kSage.withValues(alpha: 0.35),
-            child: Row(
+            child: const Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
                     'Go deeper with the self-paced course — 8 guided modules with video, audio, and planning tools.',
                     style: TextStyle(height: 1.5, fontSize: 14),
                   ),
                 ),
-                const SizedBox(width: 12),
-                const ProBadge(),
+                SizedBox(width: 12),
+                ProBadge(),
               ],
             ),
           ),

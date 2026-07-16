@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:functional_parenting/core/providers/auth_provider.dart';
+import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
-
-import '../providers/auth_provider.dart';
-import '../theme/app_theme.dart';
 
 class AppShell extends ConsumerWidget {
   final String location;
@@ -291,8 +290,9 @@ class _MobileShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBody: true,
       backgroundColor: kBgPage,
-      body: SafeArea(child: child),
+      body: SafeArea(bottom: false, child: child),
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),

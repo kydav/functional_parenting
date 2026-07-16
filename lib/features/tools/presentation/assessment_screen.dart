@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
-import '../../../core/presentation/widgets.dart';
-import '../../../core/theme/app_theme.dart';
+import 'package:functional_parenting/core/presentation/widgets.dart';
+import 'package:functional_parenting/core/theme/app_theme.dart';
 
 /// The one free behavior-pattern assessment. A short Likert quiz that maps
 /// answers to the most likely behavior *function*, then points at next steps.
@@ -19,11 +19,11 @@ class AssessmentScreen extends HookWidget {
       'Escape',
     ),
     (
-      'It happens when they can\'t have a specific item or activity.',
+      "It happens when they can't have a specific item or activity.",
       'Tangible',
     ),
     (
-      'It appears when they\'re tired, hungry, or overstimulated.',
+      "It appears when they're tired, hungry, or overstimulated.",
       'Regulation',
     ),
     ('It fades quickly once I give attention or connection.', 'Attention'),
@@ -140,7 +140,7 @@ class _Result extends StatelessWidget {
 
   static const _guidance = {
     'Attention':
-        'The pattern points toward attention / connection. Try front-loading positive attention and keeping your reaction small for the behavior you don\'t want.',
+        "The pattern points toward attention / connection. Try front-loading positive attention and keeping your reaction small for the behavior you don't want.",
     'Escape':
         'The pattern points toward escape / avoidance. Break demands into smaller steps, offer bounded choices, and acknowledge the hard feeling.',
     'Tangible':
@@ -160,7 +160,6 @@ class _Result extends StatelessWidget {
         const Eyebrow(
           'Your likely pattern',
           icon: Icons.insights_rounded,
-          color: kBlueDeep,
         ),
         const SizedBox(height: 10),
         Text(top, style: Theme.of(context).textTheme.headlineLarge),
@@ -208,8 +207,8 @@ class _Result extends StatelessWidget {
         const SizedBox(height: 20),
         SoftCard(
           color: kSage.withValues(alpha: 0.35),
-          child: Row(
-            children: const [
+          child: const Row(
+            children: [
               Expanded(
                 child: Text(
                   'Track this behavior over time with the ABC tracker to confirm the pattern.',

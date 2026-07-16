@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
-import '../../../core/presentation/widgets.dart';
-import '../../../core/theme/app_theme.dart';
+import 'package:functional_parenting/core/presentation/widgets.dart';
+import 'package:functional_parenting/core/theme/app_theme.dart';
 
 /// A small, self-contained decision flow. In the free app the tree is limited;
 /// the full version (deeper branches, saved plans) is a Pro feature.
@@ -30,14 +30,14 @@ class DecisionToolScreen extends HookWidget {
       _Opt('Attention / connection', _attention),
       _Opt('To avoid or escape something', _escape),
       _Opt('A tangible — a thing or activity', _tangible),
-      _Opt('They\'re dysregulated / overwhelmed', _regulate),
+      _Opt("They're dysregulated / overwhelmed", _regulate),
     ],
   );
 
   static const _attention = _Step(
     guidance:
         'This behavior is asking to be seen. Give calm, low-drama attention for the behavior '
-        'you want, and keep your reaction small for the behavior you don\'t. Front-load '
+        "you want, and keep your reaction small for the behavior you don't. Front-load "
         'connection today so the tank is fuller before the next ask.',
   );
   static const _escape = _Step(
@@ -50,11 +50,11 @@ class DecisionToolScreen extends HookWidget {
     guidance:
         'They want the thing. Name it and set the limit clearly ("you want it — and it\'s not for '
         'right now"). Offer when/then ("when shoes are on, then we go"). Avoid negotiating the limit '
-        'once it\'s set.',
+        "once it's set.",
   );
   static const _regulate = _Step(
     guidance:
-        'A flooded child can\'t problem-solve. Co-regulate first: lower your voice, get to their level, '
+        "A flooded child can't problem-solve. Co-regulate first: lower your voice, get to their level, "
         'and ride the wave with them. Save the teaching for after the storm passes.',
   );
 

@@ -1,21 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:functional_parenting/core/presentation/app_shell.dart';
+import 'package:functional_parenting/core/providers/admin_provider.dart';
+import 'package:functional_parenting/core/providers/auth_provider.dart';
+import 'package:functional_parenting/features/admin/presentation/admin_screen.dart';
+import 'package:functional_parenting/features/auth/presentation/login_screen.dart';
+import 'package:functional_parenting/features/learn/presentation/learn_screen.dart';
+import 'package:functional_parenting/features/profile/presentation/profile_screen.dart';
+import 'package:functional_parenting/features/reset/presentation/reset_screen.dart';
+import 'package:functional_parenting/features/today/presentation/today_screen.dart';
+import 'package:functional_parenting/features/tools/presentation/assessment_screen.dart';
+import 'package:functional_parenting/features/tools/presentation/decision_tool_screen.dart';
+import 'package:functional_parenting/features/tools/presentation/scripts_screen.dart';
+import 'package:functional_parenting/features/tools/presentation/tools_screen.dart';
+import 'package:functional_parenting/features/workshops/presentation/workshops_screen.dart';
 import 'package:go_router/go_router.dart';
-
-import '../../features/admin/presentation/admin_screen.dart';
-import '../../features/auth/presentation/login_screen.dart';
-import '../../features/learn/presentation/learn_screen.dart';
-import '../../features/profile/presentation/profile_screen.dart';
-import '../../features/reset/presentation/reset_screen.dart';
-import '../../features/today/presentation/today_screen.dart';
-import '../../features/tools/presentation/assessment_screen.dart';
-import '../../features/tools/presentation/decision_tool_screen.dart';
-import '../../features/tools/presentation/scripts_screen.dart';
-import '../../features/tools/presentation/tools_screen.dart';
-import '../../features/workshops/presentation/workshops_screen.dart';
-import '../presentation/app_shell.dart';
-import '../providers/admin_provider.dart';
-import '../providers/auth_provider.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authNotifier = ref.read(authNotifierProvider);

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:functional_parenting/core/presentation/widgets.dart';
+import 'package:functional_parenting/core/providers/admin_provider.dart';
+import 'package:functional_parenting/core/providers/auth_provider.dart';
+import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
-
-import '../../../core/presentation/widgets.dart';
-import '../../../core/providers/admin_provider.dart';
-import '../../../core/providers/auth_provider.dart';
-import '../../../core/theme/app_theme.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -50,6 +50,21 @@ class ProfileScreen extends ConsumerWidget {
                   ],
                 ),
               ),
+              GestureDetector(
+                onTap: () => auth.signOut(),
+                child: Row(
+                  children: [
+                    Text(
+                      'Sign Out',
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.copyWith(color: Colors.black),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.logout_rounded, color: Colors.red),
+                  ],
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 24),
@@ -73,14 +88,14 @@ class ProfileScreen extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 14),
-                _PlanRow(
+                const _PlanRow(
                   title: 'Starter Toolkit',
                   price: 'one-time',
                   desc:
                       'Full toolkit, ABC tracker, worksheets, reset audio library.',
                 ),
                 const Divider(color: Colors.white12, height: 24),
-                _PlanRow(
+                const _PlanRow(
                   title: 'Functional Parenting Course',
                   price: 'course',
                   desc:
@@ -140,14 +155,12 @@ class ProfileScreen extends ConsumerWidget {
           _SettingsTile(
             icon: Icons.privacy_tip_outlined,
             label: 'Privacy policy',
-            onTap: () {},
-          ),
-          const SizedBox(height: 8),
-          _SettingsTile(
-            icon: Icons.logout_rounded,
-            label: 'Sign out',
-            danger: true,
-            onTap: () => auth.signOut(),
+            onTap: () {
+              launchUrl(
+                Uri.parse('https://auaha.app/functionalparenting/privacy'),
+                mode: LaunchMode.inAppBrowserView,
+              );
+            },
           ),
         ],
       ),
@@ -218,18 +231,15 @@ class _SettingsTile extends StatelessWidget {
   final String label;
   final Widget? trailing;
   final VoidCallback? onTap;
-  final bool danger;
   const _SettingsTile({
     required this.icon,
     required this.label,
     this.trailing,
     this.onTap,
-    this.danger = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = danger ? Colors.red : kTextPrimary;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: SoftCard(
@@ -237,14 +247,14 @@ class _SettingsTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         child: Row(
           children: [
-            Icon(icon, size: 20, color: color),
+            Icon(icon, size: 20, color: kTextPrimary),
             const SizedBox(width: 14),
             Expanded(
               child: Text(
                 label,
                 style: Theme.of(
                   context,
-                ).textTheme.titleMedium?.copyWith(color: color),
+                ).textTheme.titleMedium?.copyWith(color: kTextPrimary),
               ),
             ),
             trailing ??

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:functional_parenting/core/presentation/widgets.dart';
+import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-import '../../../core/presentation/widgets.dart';
-import '../../../core/theme/app_theme.dart';
 
 class WorkshopsScreen extends StatelessWidget {
   const WorkshopsScreen({super.key});
@@ -64,7 +63,7 @@ class WorkshopsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Book a free discovery call and we\'ll talk through what\'s happening at home and whether coaching is a fit.',
+                  "Book a free discovery call and we'll talk through what's happening at home and whether coaching is a fit.",
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.75),
                     height: 1.5,

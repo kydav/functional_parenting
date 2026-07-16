@@ -2,39 +2,26 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../services/firebase_bootstrap.dart';
-
 /// Auth state. Backed by Firebase Auth when configured; otherwise it runs a
 /// local demo session so the whole app is browsable before
 /// `flutterfire configure` has been run.
 class AuthNotifier extends ChangeNotifier {
-  FirebaseAuth? get _auth => firebaseReady ? FirebaseAuth.instance : null;
-
-  // Demo-mode session state (ignored once Firebase is live).
-  bool _demoLoggedIn = false;
-  String _demoName = '';
-  String _demoEmail = '';
+  FirebaseAuth? get _auth => FirebaseAuth.instance;
 
   AuthNotifier() {
     _auth?.authStateChanges().listen((_) => notifyListeners());
   }
 
-  bool get isLoggedIn =>
-      firebaseReady ? _auth!.currentUser != null : _demoLoggedIn;
+  bool get isLoggedIn => _auth!.currentUser != null;
   User? get currentUser => _auth?.currentUser;
 
-  String get userEmail =>
-      firebaseReady ? (_auth!.currentUser?.email ?? '') : _demoEmail;
+  String get userEmail => (_auth!.currentUser?.email ?? '');
 
   String get userName {
-    if (firebaseReady) {
-      final user = _auth!.currentUser;
-      if (user?.displayName?.isNotEmpty ?? false) return user!.displayName!;
-      final email = user?.email ?? '';
-      return email.isNotEmpty ? email.split('@').first : 'there';
-    }
-    if (_demoName.isNotEmpty) return _demoName;
-    return _demoEmail.isNotEmpty ? _demoEmail.split('@').first : 'there';
+    final user = _auth!.currentUser;
+    if (user?.displayName?.isNotEmpty ?? false) return user!.displayName!;
+    final email = user?.email ?? '';
+    return email.isNotEmpty ? email.split('@').first : 'there';
   }
 
   String get userInitials {
@@ -47,12 +34,6 @@ class AuthNotifier extends ChangeNotifier {
   }
 
   Future<void> signIn({required String email, required String password}) async {
-    if (!firebaseReady) {
-      _demoLoggedIn = true;
-      _demoEmail = email;
-      notifyListeners();
-      return;
-    }
     await _auth!.signInWithEmailAndPassword(email: email, password: password);
   }
 
@@ -61,13 +42,6 @@ class AuthNotifier extends ChangeNotifier {
     required String password,
     String? name,
   }) async {
-    if (!firebaseReady) {
-      _demoLoggedIn = true;
-      _demoEmail = email;
-      _demoName = name ?? '';
-      notifyListeners();
-      return;
-    }
     final cred = await _auth!.createUserWithEmailAndPassword(
       email: email,
       password: password,
@@ -79,16 +53,10 @@ class AuthNotifier extends ChangeNotifier {
   }
 
   Future<void> sendPasswordReset(String email) async {
-    if (!firebaseReady) return;
     await _auth!.sendPasswordResetEmail(email: email);
   }
 
   Future<void> signOut() async {
-    if (!firebaseReady) {
-      _demoLoggedIn = false;
-      notifyListeners();
-      return;
-    }
     await _auth!.signOut();
   }
 }

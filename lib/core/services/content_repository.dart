@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../models/content.dart';
+import 'package:functional_parenting/core/models/content.dart';
 
 /// Firestore-backed store for the CMS-managed content. Collections are
 /// world-readable (public content); writes are restricted to admins by the
@@ -62,62 +62,4 @@ class ContentRepository {
     final doc = id.isEmpty ? ref.doc() : ref.doc(id);
     return doc.set(payload, SetOptions(merge: true));
   }
-
-  // ── Seeding ──────────────────────────────────────────────────────────────
-
-  Future<bool> _isEmpty(CollectionReference<Map<String, dynamic>> ref) async =>
-      (await ref.limit(1).get()).docs.isEmpty;
-
-  /// Pushes the bundled starter content to any collection that is still empty.
-  /// Safe to call repeatedly — it never overwrites existing docs.
-  Future<SeedResult> seedStarterContent({
-    required List<ParentingTip> tips,
-    required List<ParentingChallenge> challenges,
-    required List<ReflectionPrompt> reflections,
-    required List<Script> scripts,
-  }) async {
-    var written = 0;
-    if (await _isEmpty(_tips)) {
-      written += await _seedInto(_tips, {
-        for (final t in tips) t.id: t.toMap(),
-      });
-    }
-    if (await _isEmpty(_challenges)) {
-      written += await _seedInto(_challenges, {
-        for (final c in challenges) c.id: c.toMap(),
-      });
-    }
-    if (await _isEmpty(_reflections)) {
-      written += await _seedInto(_reflections, {
-        for (final r in reflections) r.id: r.toMap(),
-      });
-    }
-    if (await _isEmpty(_scripts)) {
-      written += await _seedInto(_scripts, {
-        for (final s in scripts) s.id: s.toMap(),
-      });
-    }
-    return SeedResult(written);
-  }
-
-  Future<int> _seedInto(
-    CollectionReference<Map<String, dynamic>> ref,
-    Map<String, Map<String, dynamic>> docs,
-  ) async {
-    final batch = _db.batch();
-    docs.forEach((id, data) {
-      batch.set(ref.doc(id), {
-        ...data,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-    });
-    await batch.commit();
-    return docs.length;
-  }
-}
-
-class SeedResult {
-  final int written;
-  const SeedResult(this.written);
-  bool get seeded => written > 0;
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
-
-import '../../../core/theme/app_theme.dart';
 
 /// "Reset Right Now" — a calm full-screen breathing + grounding sequence a
 /// parent can open in a heated moment.

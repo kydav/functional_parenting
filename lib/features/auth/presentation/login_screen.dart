@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:functional_parenting/core/providers/auth_provider.dart';
+import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-
-import '../../../core/providers/auth_provider.dart';
-import '../../../core/services/firebase_bootstrap.dart';
-import '../../../core/theme/app_theme.dart';
 
 class LoginScreen extends HookConsumerWidget {
   const LoginScreen({super.key});
@@ -33,7 +31,7 @@ class LoginScreen extends HookConsumerWidget {
           await auth.signIn(email: email.text.trim(), password: password.text);
         }
       } catch (e) {
-        error.value = e.toString();
+        error.value = e.toString().replaceAll(RegExp(r'^\[.*?\]\s*'), '');
       } finally {
         busy.value = false;
       }
@@ -51,6 +49,7 @@ class LoginScreen extends HookConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  Image.asset('assets/icon/icon_fg.png', height: 128),
                   Container(
                     width: 64,
                     height: 64,
@@ -60,23 +59,13 @@ class LoginScreen extends HookConsumerWidget {
                     ),
                     child: const Center(
                       child: Text(
-                        'fp',
+                        'Functional Parenting',
                         style: TextStyle(
                           color: kNavy,
                           fontSize: 30,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Functional Parenting',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -102,6 +91,7 @@ class LoginScreen extends HookConsumerWidget {
                           TextField(
                             controller: name,
                             textCapitalization: TextCapitalization.words,
+                            textInputAction: TextInputAction.next,
                             decoration: const InputDecoration(
                               labelText: 'Your name',
                             ),
@@ -111,6 +101,7 @@ class LoginScreen extends HookConsumerWidget {
                         TextField(
                           controller: email,
                           keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
                           autocorrect: false,
                           decoration: const InputDecoration(labelText: 'Email'),
                         ),
@@ -121,6 +112,7 @@ class LoginScreen extends HookConsumerWidget {
                           decoration: const InputDecoration(
                             labelText: 'Password',
                           ),
+                          textInputAction: TextInputAction.done,
                           onSubmitted: (_) => submit(),
                         ),
                         if (error.value != null) ...[
@@ -161,17 +153,6 @@ class LoginScreen extends HookConsumerWidget {
                       ],
                     ),
                   ),
-                  if (!firebaseReady) ...[
-                    const SizedBox(height: 16),
-                    Text(
-                      'Demo mode — Firebase not configured yet. Any email/password gets you in.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: kSage.withValues(alpha: 0.9),
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),

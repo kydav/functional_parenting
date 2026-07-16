@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:functional_parenting/core/models/content.dart';
+import 'package:functional_parenting/core/presentation/widgets.dart';
+import 'package:functional_parenting/core/providers/content_provider.dart';
+import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../../../core/models/content.dart';
-import '../../../core/presentation/widgets.dart';
-import '../../../core/providers/content_provider.dart';
-import '../../../core/services/content_repository.dart';
-import '../../../core/theme/app_theme.dart';
-
-/// In-app content CMS. Admin-only (routing gates access via [isAdminProvider]).
-/// Reads/writes the Firestore collections through [ContentRepository]; when
-/// Firebase isn't configured it shows the seed content read-only.
+/**
+ * In-app content CMS. Admin-only (routing gates access via [isAdminProvider]).
+ * Reads/writes the Firestore collections through [ContentRepository]; when
+ * Firebase isn't configured it shows the seed content read-only.
+ */
+///
 class AdminScreen extends HookConsumerWidget {
   const AdminScreen({super.key});
 
@@ -23,13 +24,6 @@ class AdminScreen extends HookConsumerWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Content CMS'),
-          actions: [
-            IconButton(
-              tooltip: 'Seed starter content',
-              icon: const Icon(Icons.auto_awesome_outlined),
-              onPressed: repo == null ? null : () => _seed(context, repo),
-            ),
-          ],
           bottom: const TabBar(
             isScrollable: true,
             tabAlignment: TabAlignment.start,
@@ -62,29 +56,6 @@ class AdminScreen extends HookConsumerWidget {
       ),
     );
   }
-
-  Future<void> _seed(BuildContext context, ContentRepository repo) async {
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      final result = await repo.seedStarterContent(
-        tips: kSeedTips,
-        challenges: kSeedChallenges,
-        reflections: kSeedReflections,
-        scripts: kSeedScripts,
-      );
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            result.seeded
-                ? 'Seeded ${result.written} starter items.'
-                : 'Nothing to seed — collections already have content.',
-          ),
-        ),
-      );
-    } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Seed failed: $e')));
-    }
-  }
 }
 
 class _DemoBanner extends StatelessWidget {
@@ -97,7 +68,7 @@ class _DemoBanner extends StatelessWidget {
       color: kSage.withValues(alpha: 0.4),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: const Text(
-        'Demo mode — Firebase not connected. Showing seed content read-only; edits won\'t save.',
+        "Demo mode — Firebase not connected. Showing seed content read-only; edits won't save.",
         style: TextStyle(fontSize: 12, color: kNavy),
       ),
     );
@@ -217,7 +188,7 @@ Future<bool> _confirmDelete(BuildContext context) async {
     context: context,
     builder: (ctx) => AlertDialog(
       title: const Text('Delete item?'),
-      content: const Text('This can\'t be undone.'),
+      content: const Text("This can't be undone."),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
@@ -290,7 +261,7 @@ class _TipsTab extends ConsumerWidget {
           onDelete: repo == null
               ? null
               : () async {
-                  if (await _confirmDelete(context)) repo.deleteTip(t.id);
+                  if (await _confirmDelete(context)) await repo.deleteTip(t.id);
                 },
         );
       }),
@@ -303,7 +274,7 @@ class _TipSheet extends HookWidget {
   final int order;
   final Future<void> Function(ParentingTip) onSave;
 
-  const _TipSheet({this.existing, this.order = 0, required this.onSave});
+  const _TipSheet({required this.onSave, this.existing, this.order = 0});
 
   @override
   Widget build(BuildContext context) {
@@ -368,7 +339,9 @@ class _ChallengesTab extends ConsumerWidget {
           onDelete: repo == null
               ? null
               : () async {
-                  if (await _confirmDelete(context)) repo.deleteChallenge(c.id);
+                  if (await _confirmDelete(context)) {
+                    await repo.deleteChallenge(c.id);
+                  }
                 },
         );
       }),
@@ -381,7 +354,7 @@ class _ChallengeSheet extends HookWidget {
   final int order;
   final Future<void> Function(ParentingChallenge) onSave;
 
-  const _ChallengeSheet({this.existing, this.order = 0, required this.onSave});
+  const _ChallengeSheet({required this.onSave, this.existing, this.order = 0});
 
   @override
   Widget build(BuildContext context) {
@@ -454,7 +427,7 @@ class _ReflectionsTab extends ConsumerWidget {
               ? null
               : () async {
                   if (await _confirmDelete(context)) {
-                    repo.deleteReflection(r.id);
+                    await repo.deleteReflection(r.id);
                   }
                 },
         );
@@ -468,7 +441,7 @@ class _ReflectionSheet extends HookWidget {
   final int order;
   final Future<void> Function(ReflectionPrompt) onSave;
 
-  const _ReflectionSheet({this.existing, this.order = 0, required this.onSave});
+  const _ReflectionSheet({required this.onSave, this.existing, this.order = 0});
 
   @override
   Widget build(BuildContext context) {
@@ -529,7 +502,9 @@ class _ScriptsTab extends ConsumerWidget {
           onDelete: repo == null
               ? null
               : () async {
-                  if (await _confirmDelete(context)) repo.deleteScript(s.id);
+                  if (await _confirmDelete(context)) {
+                    await repo.deleteScript(s.id);
+                  }
                 },
         );
       }),
@@ -542,7 +517,7 @@ class _ScriptSheet extends HookWidget {
   final int order;
   final Future<void> Function(Script) onSave;
 
-  const _ScriptSheet({this.existing, this.order = 0, required this.onSave});
+  const _ScriptSheet({required this.onSave, this.existing, this.order = 0});
 
   @override
   Widget build(BuildContext context) {

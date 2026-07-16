@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/models/content.dart';
-import '../../../core/presentation/widgets.dart';
-import '../../../core/providers/content_provider.dart';
-import '../../../core/theme/app_theme.dart';
+import 'package:functional_parenting/core/models/content.dart';
+import 'package:functional_parenting/core/presentation/widgets.dart';
+import 'package:functional_parenting/core/providers/content_provider.dart';
+import 'package:functional_parenting/core/theme/app_theme.dart';
 
 class ScriptsScreen extends ConsumerWidget {
   const ScriptsScreen({super.key});

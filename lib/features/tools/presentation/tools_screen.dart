@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:functional_parenting/core/presentation/widgets.dart';
+import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
-
-import '../../../core/presentation/widgets.dart';
-import '../../../core/theme/app_theme.dart';
 
 class ToolsScreen extends StatelessWidget {
   const ToolsScreen({super.key});
@@ -19,7 +18,7 @@ class ToolsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
-          const Eyebrow('Free tools', color: kBlueDeep),
+          const Eyebrow('Free tools'),
           const SizedBox(height: 10),
           ToolTile(
             icon: Icons.alt_route_rounded,
@@ -48,23 +47,23 @@ class ToolsScreen extends StatelessWidget {
           const SizedBox(height: 28),
           const Eyebrow('Full toolkit', color: kSageDeep),
           const SizedBox(height: 10),
-          _LockedTile(
+          const _LockedTile(
             title: 'ABC behavior tracker',
             subtitle: 'Log antecedent, behavior, consequence over time',
           ),
           const SizedBox(height: 12),
-          _LockedTile(
+          const _LockedTile(
             title: 'Behavior goal worksheets',
             subtitle: 'Set and track a specific behavior goal',
           ),
           const SizedBox(height: 12),
-          _LockedTile(
+          const _LockedTile(
             title: 'Reinforcement planner',
             subtitle:
                 'Plan consequences and reinforcement that fit the function',
           ),
           const SizedBox(height: 12),
-          _LockedTile(
+          const _LockedTile(
             title: 'Parent reset audio collection',
             subtitle: 'Guided audio to regulate on the go',
           ),

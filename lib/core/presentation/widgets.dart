@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_theme.dart';
+import 'package:functional_parenting/core/theme/app_theme.dart';
 
 /// Constrains content to a comfortable reading width and applies page padding.
 class PageBody extends StatelessWidget {
@@ -8,7 +8,7 @@ class PageBody extends StatelessWidget {
   final EdgeInsets padding;
   const PageBody({
     required this.child,
-    this.padding = const EdgeInsets.fromLTRB(20, 20, 20, 100),
+    this.padding = const EdgeInsets.fromLTRB(20, 20, 20, 170),
     super.key,
   });
 

@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:functional_parenting/core/presentation/widgets.dart';
+import 'package:functional_parenting/core/providers/auth_provider.dart';
+import 'package:functional_parenting/core/providers/content_provider.dart';
+import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
-
-import '../../../core/presentation/widgets.dart';
-import '../../../core/providers/auth_provider.dart';
-import '../../../core/providers/content_provider.dart';
-import '../../../core/theme/app_theme.dart';
 
 class TodayScreen extends ConsumerWidget {
   const TodayScreen({super.key});
@@ -52,10 +51,10 @@ class TodayScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(width: 14),
-                Expanded(
+                const Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Text(
                         'Reset Right Now',
                         style: TextStyle(
@@ -137,7 +136,6 @@ class TodayScreen extends ConsumerWidget {
           const Eyebrow(
             'Daily reflection',
             icon: Icons.edit_note_rounded,
-            color: kBlueDeep,
           ),
           const SizedBox(height: 8),
           SoftCard(
@@ -151,9 +149,9 @@ class TodayScreen extends ConsumerWidget {
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 12),
-                TextField(
+                const TextField(
                   maxLines: 3,
-                  decoration: const InputDecoration(hintText: 'Take a moment…'),
+                  decoration: InputDecoration(hintText: 'Take a moment…'),
                 ),
               ],
             ),
