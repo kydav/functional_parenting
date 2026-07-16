@@ -126,7 +126,7 @@ class _ItemCard extends StatelessWidget {
                 ],
               ),
             ),
-            Switch(value: active, onChanged: onToggle, activeThumbColor: kNavy),
+            Switch(value: active, onChanged: onToggle),
             IconButton(
               icon: const Icon(Icons.delete_outline_rounded, size: 20),
               color: context.colors.textSecondary,
