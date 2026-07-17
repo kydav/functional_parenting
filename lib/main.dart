@@ -13,13 +13,19 @@ Future<void> main() async {
   await Firebase.initializeApp();
 
   final prefs = await SharedPreferences.getInstance();
-  await NotificationService.instance.init();
 
   final container = ProviderContainer(
     overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
   );
-  // Re-apply saved notification schedules on every launch.
-  await container.read(notificationSettingsProvider.notifier).applyOnLaunch();
+
+  // Notification setup must never prevent the app from starting. If anything
+  // here fails (e.g. an unrecognized device timezone), log it and carry on.
+  try {
+    await NotificationService.instance.init();
+    await container.read(notificationSettingsProvider.notifier).applyOnLaunch();
+  } catch (e) {
+    debugPrint('Notification setup skipped at launch: $e');
+  }
 
   runApp(
     UncontrolledProviderScope(

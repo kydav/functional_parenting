@@ -27,7 +27,13 @@ class NotificationService {
   Future<void> init() async {
     if (_initialized) return;
     tz.initializeTimeZones();
-    tz.setLocalLocation(tz.getLocation(await _localTimeZone()));
+    // Some devices report a timezone id that isn't in the tz database, which
+    // makes getLocation throw. Fall back to UTC so startup can't be blocked.
+    try {
+      tz.setLocalLocation(tz.getLocation(await _localTimeZone()));
+    } catch (_) {
+      tz.setLocalLocation(tz.getLocation('UTC'));
+    }
 
     const androidInit = AndroidInitializationSettings('ic_notification');
     const darwinInit = DarwinInitializationSettings(
