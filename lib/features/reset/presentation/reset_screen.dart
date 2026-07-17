@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
 
@@ -73,12 +74,16 @@ class _ResetScreenState extends State<ResetScreen>
                 final local = t - t.floor();
                 double scale;
                 if (phase == 0) {
+                  HapticFeedback.vibrate();
                   scale = 0.6 + 0.4 * local; // in
                 } else if (phase == 1) {
+                  HapticFeedback.lightImpact();
                   scale = 1.0; // hold
                 } else if (phase == 2) {
+                  HapticFeedback.vibrate();
                   scale = 1.0 - 0.4 * local; // out
                 } else {
+                  HapticFeedback.lightImpact();
                   scale = 0.6; // hold
                 }
                 return Column(

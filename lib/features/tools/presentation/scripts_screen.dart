@@ -15,7 +15,7 @@ class ScriptsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Scripts')),
       body: PageBody(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 140),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

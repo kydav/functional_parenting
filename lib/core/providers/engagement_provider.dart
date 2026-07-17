@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:functional_parenting/core/services/notification_service.dart';
@@ -87,11 +89,28 @@ class EngagementController extends StateNotifier<EngagementState> {
     state = state.copyWith(challengeDoneToday: done, streak: _liveStreak());
   }
 
-  Future<void> saveReflection(String text) async {
+  Future<void> saveReflection(String prompt, String text) async {
+    final existing = (_prefs.getString('reflections')) ?? '[]';
+    final reflections = (jsonDecode(existing) as List)
+        .map((e) => Reflection.fromJson(e as Map<String, dynamic>))
+        .toList();
     final today = _dayKey();
-    await _prefs.setString('reflection_$today', text);
+    reflections.add(Reflection(dateKey: today, prompt: prompt, text: text));
+    await _prefs.setString(
+      'reflections',
+      jsonEncode(reflections.map((e) => e.toJson()).toList()),
+    );
+
     if (text.trim().isNotEmpty) await _recordEngagement();
     state = state.copyWith(reflectionToday: text, streak: _liveStreak());
+  }
+
+  Future<List<Reflection>> getPastReflections() async {
+    final existing = (_prefs.getString('reflections')) ?? '[]';
+    final reflections = (jsonDecode(existing) as List)
+        .map((e) => Reflection.fromJson(e as Map<String, dynamic>))
+        .toList();
+    return reflections;
   }
 
   /// Advances the streak once per calendar day of engagement.
@@ -184,3 +203,27 @@ final notificationSettingsProvider =
       (ref) =>
           NotificationSettingsController(ref.watch(sharedPreferencesProvider)),
     );
+
+class Reflection {
+  final String dateKey;
+  final String prompt;
+  final String text;
+
+  const Reflection({
+    required this.dateKey,
+    required this.prompt,
+    required this.text,
+  });
+
+  factory Reflection.fromJson(Map<String, dynamic> json) => Reflection(
+    dateKey: json['dateKey'] as String,
+    prompt: json['prompt'] as String,
+    text: json['text'] as String,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'dateKey': dateKey,
+    'prompt': prompt,
+    'text': text,
+  };
+}

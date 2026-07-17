@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:functional_parenting/core/providers/auth_provider.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
@@ -330,7 +331,10 @@ class _FloatingNav extends StatelessWidget {
           final color = active ? kBlue : Colors.white.withValues(alpha: 0.55);
           return Expanded(
             child: GestureDetector(
-              onTap: () => context.go(item.path),
+              onTap: () {
+                HapticFeedback.lightImpact();
+                context.go(item.path);
+              },
               behavior: HitTestBehavior.opaque,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,

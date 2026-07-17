@@ -29,7 +29,7 @@ class NotificationService {
     tz.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation(await _localTimeZone()));
 
-    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidInit = AndroidInitializationSettings('ic_notification');
     const darwinInit = DarwinInitializationSettings(
       // We request permission explicitly later, not at init.
       requestAlertPermission: false,
@@ -114,6 +114,7 @@ class NotificationService {
         android: AndroidNotificationDetails(
           'daily_reminders',
           'Daily reminders',
+          icon: 'ic_notification',
           channelDescription: 'Your daily parenting tip and challenge',
         ),
         iOS: DarwinNotificationDetails(),

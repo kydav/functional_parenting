@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:functional_parenting/core/presentation/widgets.dart';
 import 'package:functional_parenting/core/providers/auth_provider.dart';
@@ -25,12 +26,6 @@ class TodayScreen extends HookConsumerWidget {
     final reflectionCtrl = useTextEditingController(
       text: engagement.reflectionToday,
     );
-    final debounce = useRef<Timer?>(null);
-    useEffect(
-      () =>
-          () => debounce.value?.cancel(),
-      const [],
-    );
 
     // Contextually request notification permission once we're in the app (the
     // toggles default on). Idempotent — iOS/Android won't re-prompt after the
@@ -45,13 +40,6 @@ class TodayScreen extends HookConsumerWidget {
       });
       return null;
     }, const []);
-
-    void onReflectionChanged(String value) {
-      debounce.value?.cancel();
-      debounce.value = Timer(const Duration(milliseconds: 600), () {
-        ref.read(engagementProvider.notifier).saveReflection(value);
-      });
-    }
 
     return PageBody(
       child: Column(
@@ -178,9 +166,12 @@ class TodayScreen extends HookConsumerWidget {
                       )
                     else
                       OutlinedButton.icon(
-                        onPressed: () => ref
-                            .read(engagementProvider.notifier)
-                            .setChallengeDone(done: true),
+                        onPressed: () {
+                          HapticFeedback.successNotification();
+                          ref
+                              .read(engagementProvider.notifier)
+                              .setChallengeDone(done: true);
+                        },
                         icon: const Icon(Icons.check_rounded, size: 18),
                         label: const Text('Mark done'),
                       ),
@@ -204,12 +195,104 @@ class TodayScreen extends HookConsumerWidget {
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: reflectionCtrl,
-                  onChanged: onReflectionChanged,
-                  maxLines: 3,
-                  decoration: const InputDecoration(hintText: 'Take a moment…'),
-                ),
+                if (engagement.reflectionToday.isNotEmpty)
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.check_circle_rounded,
+                        color: kSuccessGreen,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Saved',
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.copyWith(color: kSuccessGreen),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: () {
+                          showModalBottomSheet(
+                            useRootNavigator: true,
+                            context: context,
+                            builder: (context) {
+                              return Container(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      reflection.prompt,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    TextField(
+                                      controller: reflectionCtrl,
+                                      maxLines: 3,
+                                      decoration: const InputDecoration(
+                                        hintText: 'Take a moment…',
+                                      ),
+                                    ),
+                                    const SizedBox(height: 14),
+                                    OutlinedButton.icon(
+                                      onPressed: () {
+                                        HapticFeedback.successNotification();
+                                        ref
+                                            .read(engagementProvider.notifier)
+                                            .saveReflection(
+                                              reflection.prompt,
+                                              reflectionCtrl.text,
+                                            );
+                                        Navigator.pop(context);
+                                      },
+                                      icon: const Icon(
+                                        Icons.check_rounded,
+                                        size: 18,
+                                      ),
+                                      label: const Text('Save'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          );
+                        },
+                        icon: const Icon(Icons.edit_rounded, size: 18),
+                      ),
+                    ],
+                  )
+                else
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TextField(
+                        controller: reflectionCtrl,
+                        maxLines: 3,
+                        decoration: const InputDecoration(
+                          hintText: 'Take a moment…',
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          HapticFeedback.successNotification();
+                          ref
+                              .read(engagementProvider.notifier)
+                              .saveReflection(
+                                reflection.prompt,
+                                reflectionCtrl.text,
+                              );
+                        },
+                        icon: const Icon(Icons.check_rounded, size: 18),
+                        label: const Text('Save'),
+                      ),
+                    ],
+                  ),
               ],
             ),
           ),

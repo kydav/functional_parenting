@@ -40,7 +40,7 @@ class AssessmentScreen extends HookWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Behavior-pattern check')),
       body: PageBody(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 140),
         child: submitted.value
             ? _Result(
                 scores: _score(answers.value),
@@ -82,12 +82,10 @@ class AssessmentScreen extends HookWidget {
                                   label: Text(_labels[v]),
                                   selected: selected,
                                   showCheckmark: false,
-                                  selectedColor: kNavy,
+                                  //selectedColor: kNavy,
                                   backgroundColor: context.colors.pageBg,
                                   labelStyle: TextStyle(
-                                    color: selected
-                                        ? Colors.white
-                                        : context.colors.textPrimary,
+                                    color: context.colors.textPrimary,
                                     fontSize: 12,
                                   ),
                                   side: BorderSide(

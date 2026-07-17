@@ -159,6 +159,11 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ),
           _SettingsTile(
+            icon: Icons.self_improvement,
+            label: 'Past Reflections',
+            onTap: () => context.push('/reflections'),
+          ),
+          _SettingsTile(
             icon: Icons.brightness_6_outlined,
             label: 'Appearance',
             trailing: Text(

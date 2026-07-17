@@ -8,6 +8,7 @@ import 'package:functional_parenting/features/admin/presentation/admin_screen.da
 import 'package:functional_parenting/features/auth/presentation/login_screen.dart';
 import 'package:functional_parenting/features/learn/presentation/learn_screen.dart';
 import 'package:functional_parenting/features/profile/presentation/profile_screen.dart';
+import 'package:functional_parenting/features/reflections_screen/reflections_screen.dart';
 import 'package:functional_parenting/features/reset/presentation/reset_screen.dart';
 import 'package:functional_parenting/features/today/presentation/today_screen.dart';
 import 'package:functional_parenting/features/tools/presentation/assessment_screen.dart';
@@ -43,6 +44,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/account',
         builder: (context, state) => const AccountScreen(),
+      ),
+      GoRoute(
+        path: '/reflections',
+        builder: (context, state) => const ReflectionsScreen(),
       ),
       ShellRoute(
         builder: (context, state, child) =>
