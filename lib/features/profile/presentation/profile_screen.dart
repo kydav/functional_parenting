@@ -137,6 +137,11 @@ class ProfileScreen extends ConsumerWidget {
               label: 'Content CMS',
               onTap: () => context.push('/admin'),
             ),
+            _SettingsTile(
+              icon: Icons.event_available_outlined,
+              label: 'Manage workshops',
+              onTap: () => context.push('/admin/workshops'),
+            ),
             const SizedBox(height: 24),
           ],
 

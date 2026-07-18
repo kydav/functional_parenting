@@ -5,6 +5,7 @@ import 'package:functional_parenting/core/providers/admin_provider.dart';
 import 'package:functional_parenting/core/providers/auth_provider.dart';
 import 'package:functional_parenting/features/account/presentation/account_screen.dart';
 import 'package:functional_parenting/features/admin/presentation/admin_screen.dart';
+import 'package:functional_parenting/features/admin/presentation/workshops_admin_screen.dart';
 import 'package:functional_parenting/features/auth/presentation/login_screen.dart';
 import 'package:functional_parenting/features/learn/presentation/learn_screen.dart';
 import 'package:functional_parenting/features/profile/presentation/profile_screen.dart';
@@ -28,8 +29,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       final onLogin = state.matchedLocation == '/login';
       if (!loggedIn && !onLogin) return '/login';
       if (loggedIn && onLogin) return '/today';
-      // Admin CMS is gated to admins.
-      if (state.matchedLocation == '/admin' && !ref.read(isAdminProvider)) {
+      // Admin areas are gated to admins.
+      if (state.matchedLocation.startsWith('/admin') &&
+          !ref.read(isAdminProvider)) {
         return '/today';
       }
       return null;
@@ -40,6 +42,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/reset', builder: (context, state) => const ResetScreen()),
       // Admin content CMS — full screen, gated in redirect above.
       GoRoute(path: '/admin', builder: (context, state) => const AdminScreen()),
+      GoRoute(
+        path: '/admin/workshops',
+        builder: (context, state) => const WorkshopsAdminScreen(),
+      ),
       // Account & password management — full screen.
       GoRoute(
         path: '/account',

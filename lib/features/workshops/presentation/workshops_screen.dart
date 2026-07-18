@@ -1,38 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:functional_parenting/core/models/workshop.dart';
 import 'package:functional_parenting/core/presentation/widgets.dart';
+import 'package:functional_parenting/core/providers/auth_provider.dart';
+import 'package:functional_parenting/core/providers/workshop_provider.dart';
+import 'package:functional_parenting/core/services/notification_service.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class WorkshopsScreen extends StatelessWidget {
+class WorkshopsScreen extends ConsumerWidget {
   const WorkshopsScreen({super.key});
 
-  static const _workshops = [
-    (
-      title: 'Taming the Bedtime Battle',
-      date: 'Thu, Jul 24 · 7:00 PM MT',
-      format: 'Live on Zoom · Free',
-      spots: '12 spots left',
-    ),
-    (
-      title: 'Big Feelings, Small Humans',
-      date: 'Tue, Aug 5 · 12:00 PM MT',
-      format: 'Live on Zoom · Free',
-      spots: 'Filling up',
-    ),
-  ];
-
-  Future<void> _open(BuildContext context, String label) async {
+  Future<void> _openCall(BuildContext context) async {
     // Placeholder — wire to the founder's real booking link (Calendly, etc.).
     final ok = await launchUrl(Uri.parse('https://calendly.com'));
     if (!ok && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Booking link coming soon: $label')),
+        const SnackBar(content: Text('Booking link coming soon.')),
       );
     }
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final workshopsAsync = ref.watch(workshopsProvider);
+
     return PageBody(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -76,7 +70,7 @@ class WorkshopsScreen extends StatelessWidget {
                     backgroundColor: kBlue,
                     foregroundColor: kNavy,
                   ),
-                  onPressed: () => _open(context, 'Discovery call'),
+                  onPressed: () => _openCall(context),
                   icon: const Icon(Icons.calendar_month_rounded, size: 18),
                   label: const Text('Book a free call'),
                 ),
@@ -90,58 +84,171 @@ class WorkshopsScreen extends StatelessWidget {
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 12),
-          ..._workshops.map(
-            (w) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: SoftCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            w.title,
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: kSuccessGreen.withValues(alpha: 0.14),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            w.spots,
-                            style: const TextStyle(
-                              color: kSuccessGreen,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    _MetaRow(icon: Icons.event_outlined, text: w.date),
-                    const SizedBox(height: 6),
-                    _MetaRow(icon: Icons.videocam_outlined, text: w.format),
-                    const SizedBox(height: 14),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: () => _open(context, w.title),
-                        child: const Text('Reserve my spot'),
+          workshopsAsync.when(
+            loading: () => const Padding(
+              padding: EdgeInsets.only(top: 20),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (e, _) => Text('Could not load workshops: $e'),
+            data: (all) {
+              final upcoming = all.where((w) => w.isUpcoming).toList();
+              if (upcoming.isEmpty) {
+                return SoftCard(
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.event_busy_outlined,
+                        color: context.colors.textSecondary,
                       ),
-                    ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'No workshops scheduled right now — check back soon.',
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: context.colors.textSecondary),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+              return Column(
+                children: [
+                  for (final w in upcoming) ...[
+                    _WorkshopCard(workshop: w),
+                    const SizedBox(height: 12),
                   ],
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WorkshopCard extends HookConsumerWidget {
+  final Workshop workshop;
+  const _WorkshopCard({required this.workshop});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final reserved =
+        ref.watch(myReservationProvider(workshop.id)).value ?? false;
+    final busy = useState(false);
+
+    // Keep the 10-minutes-before reminder in sync with reservation state. This
+    // also reschedules on launch / a new device where the local alarm was lost.
+    useEffect(() {
+      final notifs = NotificationService.instance;
+      if (reserved && workshop.isUpcoming) {
+        notifs.scheduleWorkshopReminder(
+          workshopId: workshop.id,
+          title: workshop.title,
+          startsAt: workshop.startsAt,
+        );
+      } else {
+        notifs.cancelWorkshopReminder(workshop.id);
+      }
+      return null;
+    }, [reserved, workshop.startsAt]);
+
+    Future<void> toggle() async {
+      final auth = ref.read(authNotifierProvider);
+      final uid = auth.currentUser?.uid;
+      if (uid == null) return;
+      busy.value = true;
+      final repo = ref.read(workshopRepositoryProvider);
+      try {
+        if (reserved) {
+          await repo.cancelReservation(workshop.id, uid);
+        } else {
+          await repo.reserve(workshop.id, uid, auth.userName);
+        }
+      } finally {
+        busy.value = false;
+      }
+    }
+
+    return SoftCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(workshop.title, style: Theme.of(context).textTheme.titleLarge),
+          if (workshop.description.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              workshop.description,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(height: 1.4),
+            ),
+          ],
+          const SizedBox(height: 10),
+          _MetaRow(
+            icon: Icons.event_outlined,
+            text: DateFormat('EEE, MMM d').format(workshop.startsAt),
+          ),
+          const SizedBox(height: 6),
+          _MetaRow(
+            icon: Icons.schedule,
+            text: DateFormat('h:mm a').format(workshop.startsAt),
+          ),
+          const SizedBox(height: 14),
+          if (reserved) ...[
+            Row(
+              children: [
+                const Icon(Icons.check_circle, color: kSuccessGreen, size: 18),
+                const SizedBox(width: 6),
+                Text(
+                  "Reserved — we'll remind you 10 min before",
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: kSuccessGreen),
                 ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                if (workshop.joinLink.isNotEmpty)
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: () => launchUrl(
+                        Uri.parse(workshop.joinLink),
+                        mode: LaunchMode.externalApplication,
+                      ),
+                      icon: const Icon(Icons.videocam_rounded, size: 18),
+                      label: const Text('Join'),
+                    ),
+                  ),
+                if (workshop.joinLink.isNotEmpty) const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: busy.value ? null : toggle,
+                    child: const Text('Cancel'),
+                  ),
+                ),
+              ],
+            ),
+          ] else
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: busy.value ? null : toggle,
+                child: busy.value
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text('Reserve my spot'),
               ),
             ),
-          ),
         ],
       ),
     );

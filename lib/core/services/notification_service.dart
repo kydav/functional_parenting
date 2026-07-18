@@ -22,6 +22,13 @@ class NotificationService {
     description: 'Your daily parenting tip and challenge',
   );
 
+  static const _workshopChannel = AndroidNotificationChannel(
+    'workshop_reminders',
+    'Workshop reminders',
+    description: "Reminders for workshops you've reserved",
+    importance: Importance.high,
+  );
+
   bool _initialized = false;
 
   Future<void> init() async {
@@ -49,11 +56,12 @@ class NotificationService {
       ),
     );
 
-    await _plugin
+    final android = _plugin
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.createNotificationChannel(_channel);
+        >();
+    await android?.createNotificationChannel(_channel);
+    await android?.createNotificationChannel(_workshopChannel);
 
     _initialized = true;
   }
@@ -102,6 +110,50 @@ class NotificationService {
 
   Future<void> cancelTip() => _plugin.cancel(id: tipId);
   Future<void> cancelChallenge() => _plugin.cancel(id: challengeId);
+
+  // ── Workshop reminders (10 minutes before start) ─────────────────────────
+
+  /// Stable, positive notification id derived from the workshop id. Offset well
+  /// clear of the fixed daily ids.
+  int _workshopNotifId(String workshopId) =>
+      100000 + (workshopId.hashCode & 0x0FFFFFFF);
+
+  /// Schedules (or replaces) a one-time reminder 10 minutes before [startsAt].
+  /// No-op if that moment is already in the past.
+  Future<void> scheduleWorkshopReminder({
+    required String workshopId,
+    required String title,
+    required DateTime startsAt,
+  }) async {
+    await init();
+    final when = tz.TZDateTime.from(
+      startsAt.subtract(const Duration(minutes: 10)),
+      tz.local,
+    );
+    if (when.isBefore(tz.TZDateTime.now(tz.local))) return;
+    if (!await requestPermission()) return;
+    await _plugin.zonedSchedule(
+      id: _workshopNotifId(workshopId),
+      title: 'Starting soon: $title',
+      body: 'Your workshop begins in 10 minutes. Tap to join.',
+      scheduledDate: when,
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'workshop_reminders',
+          'Workshop reminders',
+          icon: 'ic_notification',
+          channelDescription: "Reminders for workshops you've reserved",
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+    );
+  }
+
+  Future<void> cancelWorkshopReminder(String workshopId) =>
+      _plugin.cancel(id: _workshopNotifId(workshopId));
 
   Future<void> _scheduleDaily({
     required int id,
