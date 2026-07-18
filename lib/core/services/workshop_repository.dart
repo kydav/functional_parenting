@@ -19,12 +19,13 @@ class WorkshopRepository {
 
   // ── Workshops ──────────────────────────────────────────────────────────────
 
-  /// Active workshops, soonest first (what users see).
+  /// Active workshops, soonest first (what users see). `active` is filtered
+  /// client-side so we only need the automatic single-field index on startsAt
+  /// (combining where + orderBy would require a composite index).
   Stream<List<Workshop>> watchActiveWorkshops() => _workshops
-      .where('active', isEqualTo: true)
       .orderBy('startsAt')
       .snapshots()
-      .map((s) => s.docs.map(Workshop.fromDoc).toList());
+      .map((s) => s.docs.map(Workshop.fromDoc).where((w) => w.active).toList());
 
   /// Every workshop incl. inactive/past (admin management view).
   Stream<List<Workshop>> watchAllWorkshops() => _workshops
