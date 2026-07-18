@@ -62,10 +62,18 @@ class EngagementController extends StateNotifier<EngagementState> {
 
   void _load() {
     final today = _dayKey();
+    final reflections = (_prefs.getString('reflections')) ?? '[]';
+
     state = EngagementState(
       streak: _liveStreak(),
       challengeDoneToday: _prefs.getBool('challenge_done_$today') ?? false,
-      reflectionToday: _prefs.getString('reflection_$today') ?? '',
+      reflectionToday: (jsonDecode(reflections) as List)
+          .map((e) => Reflection.fromJson(e as Map<String, dynamic>))
+          .firstWhere(
+            (r) => r.dateKey == today,
+            orElse: () => Reflection(dateKey: today, prompt: '', text: ''),
+          )
+          .text,
     );
   }
 
@@ -95,11 +103,21 @@ class EngagementController extends StateNotifier<EngagementState> {
         .map((e) => Reflection.fromJson(e as Map<String, dynamic>))
         .toList();
     final today = _dayKey();
-    reflections.add(Reflection(dateKey: today, prompt: prompt, text: text));
-    await _prefs.setString(
-      'reflections',
-      jsonEncode(reflections.map((e) => e.toJson()).toList()),
-    );
+    if (reflections.any((r) => r.dateKey == today)) {
+      final newReflections =
+          reflections.where((r) => r.dateKey != today).toList()
+            ..add(Reflection(dateKey: today, prompt: prompt, text: text));
+      await _prefs.setString(
+        'reflections',
+        jsonEncode(newReflections.map((e) => e.toJson()).toList()),
+      );
+    } else {
+      reflections.add(Reflection(dateKey: today, prompt: prompt, text: text));
+      await _prefs.setString(
+        'reflections',
+        jsonEncode(reflections.map((e) => e.toJson()).toList()),
+      );
+    }
 
     if (text.trim().isNotEmpty) await _recordEngagement();
     state = state.copyWith(reflectionToday: text, streak: _liveStreak());

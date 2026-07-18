@@ -74,13 +74,11 @@ class _ResetScreenState extends State<ResetScreen>
                 final local = t - t.floor();
                 double scale;
                 if (phase == 0) {
-                  HapticFeedback.vibrate();
                   scale = 0.6 + 0.4 * local; // in
                 } else if (phase == 1) {
                   HapticFeedback.lightImpact();
                   scale = 1.0; // hold
                 } else if (phase == 2) {
-                  HapticFeedback.vibrate();
                   scale = 1.0 - 0.4 * local; // out
                 } else {
                   HapticFeedback.lightImpact();
