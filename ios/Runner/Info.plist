@@ -34,10 +34,11 @@
 				<string>com.googleusercontent.apps.25230819434-3jjai0up4caankllgdscu300i4mfav6j</string>
 			</array>
 		</dict>
-		<dict/>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>GIDClientID</key>
+	<string>25230819434-3jjai0up4caankllgdscu300i4mfav6j.apps.googleusercontent.com</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
