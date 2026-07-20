@@ -184,9 +184,12 @@ class LoginScreen extends HookConsumerWidget {
                                       .read(authNotifierProvider)
                                       .signInWithGoogle,
                                 ),
-                          icon: const Icon(
-                            Icons.g_mobiledata_rounded,
-                            size: 26,
+                          icon: Image.asset(
+                            'assets/icon/google.png',
+                            height: 18,
+                            width: 18,
+                            errorBuilder: (ctx, err, stack) =>
+                                const Icon(Icons.login, size: 18),
                           ),
                           label: const Text('Continue with Google'),
                           style: OutlinedButton.styleFrom(
