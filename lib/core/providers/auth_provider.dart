@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 /// Auth state. Backed by Firebase Auth when configured; otherwise it runs a
 /// local demo session so the whole app is browsable before
@@ -52,6 +53,30 @@ class AuthNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Native Google account picker → Firebase credential. Returns silently if
+  /// the user cancels the picker.
+  Future<void> signInWithGoogle() async {
+    final googleUser = await GoogleSignIn().signIn();
+    if (googleUser == null) return; // cancelled
+    final googleAuth = await googleUser.authentication;
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+    await _auth!.signInWithCredential(credential);
+    notifyListeners();
+  }
+
+  /// Native Sign in with Apple (handled by firebase_auth — no extra plugin, and
+  /// it manages the nonce internally). iOS uses the system Apple flow.
+  Future<void> signInWithApple() async {
+    final provider = AppleAuthProvider()
+      ..addScope('email')
+      ..addScope('name');
+    await _auth!.signInWithProvider(provider);
+    notifyListeners();
+  }
+
   Future<void> sendPasswordReset(String email) async {
     await _auth!.sendPasswordResetEmail(email: email);
   }
@@ -71,6 +96,10 @@ class AuthNotifier extends ChangeNotifier {
   }
 
   Future<void> signOut() async {
+    // Also clear the cached Google session so the picker reappears next time.
+    try {
+      await GoogleSignIn().signOut();
+    } catch (_) {}
     await _auth!.signOut();
   }
 }

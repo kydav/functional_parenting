@@ -37,6 +37,24 @@ class LoginScreen extends HookConsumerWidget {
       }
     }
 
+    Future<void> socialSignIn(Future<void> Function() action) async {
+      busy.value = true;
+      error.value = null;
+      try {
+        await action();
+      } catch (e) {
+        final msg = e.toString();
+        // Don't surface an error when the user just cancels the flow.
+        if (!msg.toLowerCase().contains('cancel')) {
+          error.value = msg.replaceAll(RegExp(r'^\[.*?\]\s*'), '');
+        }
+      } finally {
+        busy.value = false;
+      }
+    }
+
+    final showApple = Theme.of(context).platform == TargetPlatform.iOS;
+
     return Scaffold(
       backgroundColor: context.colors.brandFill,
       body: SafeArea(
@@ -141,6 +159,59 @@ class LoginScreen extends HookConsumerWidget {
                                   isSignUp.value ? 'Create account' : 'Sign in',
                                 ),
                         ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            const Expanded(child: Divider()),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                              ),
+                              child: Text(
+                                'or',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ),
+                            const Expanded(child: Divider()),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        OutlinedButton.icon(
+                          onPressed: busy.value
+                              ? null
+                              : () => socialSignIn(
+                                  ref
+                                      .read(authNotifierProvider)
+                                      .signInWithGoogle,
+                                ),
+                          icon: const Icon(
+                            Icons.g_mobiledata_rounded,
+                            size: 26,
+                          ),
+                          label: const Text('Continue with Google'),
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size.fromHeight(48),
+                          ),
+                        ),
+                        if (showApple) ...[
+                          const SizedBox(height: 10),
+                          FilledButton.icon(
+                            onPressed: busy.value
+                                ? null
+                                : () => socialSignIn(
+                                    ref
+                                        .read(authNotifierProvider)
+                                        .signInWithApple,
+                                  ),
+                            icon: const Icon(Icons.apple, size: 22),
+                            label: const Text('Continue with Apple'),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: Colors.black,
+                              foregroundColor: Colors.white,
+                              minimumSize: const Size.fromHeight(48),
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 8),
                         TextButton(
                           onPressed: () => isSignUp.value = !isSignUp.value,
