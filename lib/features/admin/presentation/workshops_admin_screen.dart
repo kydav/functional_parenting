@@ -307,12 +307,12 @@ class _WorkshopSheet extends HookConsumerWidget {
               ),
             ),
             const SizedBox(height: 14),
-            const _Label('Join link'),
+            const _Label('Registration link'),
             TextField(
               controller: joinLink,
               keyboardType: TextInputType.url,
               decoration: const InputDecoration(
-                hintText: 'https://zoom.us/j/…',
+                hintText: 'https://zoom.us/webinar/register/…',
               ),
             ),
             const SizedBox(height: 6),

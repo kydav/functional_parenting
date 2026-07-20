@@ -154,18 +154,39 @@ class _WorkshopCard extends HookConsumerWidget {
       return null;
     }, [reserved, workshop.startsAt]);
 
-    Future<void> toggle() async {
+    Future<void> openRegistration() {
+      return launchUrl(
+        Uri.parse(workshop.joinLink),
+        mode: LaunchMode.externalApplication,
+      );
+    }
+
+    // Register = open the founder's Zoom webinar registration page AND record
+    // that they tapped it, so they get the 10-min reminder (and the founder can
+    // see interest). We can't confirm they finished Zoom's own registration.
+    Future<void> register() async {
       final auth = ref.read(authNotifierProvider);
       final uid = auth.currentUser?.uid;
+      if (uid == null || workshop.joinLink.isEmpty) return;
+      busy.value = true;
+      try {
+        await openRegistration();
+        await ref
+            .read(workshopRepositoryProvider)
+            .reserve(workshop.id, uid, auth.userName);
+      } finally {
+        busy.value = false;
+      }
+    }
+
+    Future<void> cancelReminder() async {
+      final uid = ref.read(authNotifierProvider).currentUser?.uid;
       if (uid == null) return;
       busy.value = true;
-      final repo = ref.read(workshopRepositoryProvider);
       try {
-        if (reserved) {
-          await repo.cancelReservation(workshop.id, uid);
-        } else {
-          await repo.reserve(workshop.id, uid, auth.userName);
-        }
+        await ref
+            .read(workshopRepositoryProvider)
+            .cancelReservation(workshop.id, uid);
       } finally {
         busy.value = false;
       }
@@ -201,33 +222,59 @@ class _WorkshopCard extends HookConsumerWidget {
               children: [
                 const Icon(Icons.check_circle, color: kSuccessGreen, size: 18),
                 const SizedBox(width: 6),
-                Text(
-                  "Reserved — we'll remind you 10 min before",
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: kSuccessGreen),
+                Expanded(
+                  child: Text(
+                    "We'll remind you 10 minutes before it starts.",
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: kSuccessGreen),
+                  ),
                 ),
               ],
+            ),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: context.colors.surfaceAlt,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.mail_outline_rounded,
+                    size: 18,
+                    color: context.colors.textSecondary,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      "If you finished registering, you'll get an email from Zoom with the link to join.",
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        height: 1.4,
+                        color: context.colors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 10),
             Row(
               children: [
                 if (workshop.joinLink.isNotEmpty)
                   Expanded(
-                    child: FilledButton.icon(
-                      onPressed: () => launchUrl(
-                        Uri.parse(workshop.joinLink),
-                        mode: LaunchMode.externalApplication,
-                      ),
-                      icon: const Icon(Icons.videocam_rounded, size: 18),
-                      label: const Text('Join'),
+                    child: OutlinedButton(
+                      onPressed: openRegistration,
+                      child: const Text('Registration page'),
                     ),
                   ),
                 if (workshop.joinLink.isNotEmpty) const SizedBox(width: 10),
                 Expanded(
-                  child: OutlinedButton(
-                    onPressed: busy.value ? null : toggle,
-                    child: const Text('Cancel'),
+                  child: TextButton(
+                    onPressed: busy.value ? null : cancelReminder,
+                    child: const Text('Cancel reminder'),
                   ),
                 ),
               ],
@@ -235,9 +282,11 @@ class _WorkshopCard extends HookConsumerWidget {
           ] else
             SizedBox(
               width: double.infinity,
-              child: FilledButton(
-                onPressed: busy.value ? null : toggle,
-                child: busy.value
+              child: FilledButton.icon(
+                onPressed: (busy.value || workshop.joinLink.isEmpty)
+                    ? null
+                    : register,
+                icon: busy.value
                     ? const SizedBox(
                         height: 18,
                         width: 18,
@@ -246,7 +295,12 @@ class _WorkshopCard extends HookConsumerWidget {
                           color: Colors.white,
                         ),
                       )
-                    : const Text('Reserve my spot'),
+                    : const Icon(Icons.open_in_new_rounded, size: 18),
+                label: Text(
+                  workshop.joinLink.isEmpty
+                      ? 'Registration opening soon'
+                      : 'Register',
+                ),
               ),
             ),
         ],
