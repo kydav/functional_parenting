@@ -128,11 +128,26 @@ jobs:
           /usr/libexec/PlistBuddy -c "Print :Entitlements:com.apple.developer.applesignin" "$RUNNER_TEMP/embedded_profile.plist"
 
           echo "Inspecting signed app entitlements"
-          codesign -d --entitlements - "$APP_DIR" > "$RUNNER_TEMP/app_entitlements.plist" 2> "$RUNNER_TEMP/codesign_meta.txt"
-          /usr/libexec/PlistBuddy -c "Print :application-identifier" "$RUNNER_TEMP/app_entitlements.plist"
-          /usr/libexec/PlistBuddy -c "Print :com.apple.developer.applesignin" "$RUNNER_TEMP/app_entitlements.plist"
+          codesign -d --entitlements - --xml "$APP_DIR" > "$RUNNER_TEMP/app_entitlements_raw.txt" 2> "$RUNNER_TEMP/codesign_meta.txt"
 
-          if ! /usr/libexec/PlistBuddy -c "Print :com.apple.developer.applesignin:0" "$RUNNER_TEMP/app_entitlements.plist" | grep -q "Default"; then
+          APP_ENTITLEMENT_OK=0
+          if plutil -convert xml1 -o "$RUNNER_TEMP/app_entitlements.plist" "$RUNNER_TEMP/app_entitlements_raw.txt" 2>/dev/null; then
+            /usr/libexec/PlistBuddy -c "Print :application-identifier" "$RUNNER_TEMP/app_entitlements.plist"
+            /usr/libexec/PlistBuddy -c "Print :com.apple.developer.applesignin" "$RUNNER_TEMP/app_entitlements.plist"
+            if /usr/libexec/PlistBuddy -c "Print :com.apple.developer.applesignin:0" "$RUNNER_TEMP/app_entitlements.plist" | grep -q "Default"; then
+              APP_ENTITLEMENT_OK=1
+            fi
+          fi
+
+          if [[ "$APP_ENTITLEMENT_OK" -eq 0 ]]; then
+            # Fallback for toolchains that return non-plist entitlement dumps.
+            cat "$RUNNER_TEMP/app_entitlements_raw.txt"
+            if grep -q "com.apple.developer.applesignin" "$RUNNER_TEMP/app_entitlements_raw.txt" && grep -q "Default" "$RUNNER_TEMP/app_entitlements_raw.txt"; then
+              APP_ENTITLEMENT_OK=1
+            fi
+          fi
+
+          if [[ "$APP_ENTITLEMENT_OK" -eq 0 ]]; then
             echo "ERROR: com.apple.developer.applesignin entitlement is missing or invalid in exported app"
             exit 1
           fi
