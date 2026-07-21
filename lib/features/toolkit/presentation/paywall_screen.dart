@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:functional_parenting/core/presentation/widgets.dart';
+import 'package:functional_parenting/core/providers/pro_provider.dart';
+import 'package:functional_parenting/core/providers/purchase_provider.dart';
+import 'package:functional_parenting/core/services/purchase_service.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
+import 'package:go_router/go_router.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 
-class PaywallScreen extends StatelessWidget {
+class PaywallScreen extends HookConsumerWidget {
   const PaywallScreen({super.key});
 
   static const _included = [
@@ -27,7 +35,68 @@ class PaywallScreen extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isPro = ref.watch(proProvider);
+    final package = ref.watch(proPackageProvider).value;
+    final busy = useState(false);
+
+    void snack(String msg) => ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(msg)));
+
+    Future<void> unlock() async {
+      if (!PurchaseService.instance.isConfigured) {
+        snack('Purchases are being set up — available very soon.');
+        return;
+      }
+      final pkg = package;
+      if (pkg == null) {
+        snack('The toolkit isn’t available to buy just yet.');
+        return;
+      }
+      busy.value = true;
+      try {
+        final info = await Purchases.purchasePackage(pkg);
+        if (!context.mounted) return;
+        if (PurchaseService.instance.entitlementActive(info)) {
+          snack('You’re all set — the toolkit is unlocked.');
+          context.pop();
+        }
+      } on PlatformException catch (e) {
+        final code = PurchasesErrorHelper.getErrorCode(e);
+        if (code != PurchasesErrorCode.purchaseCancelledError &&
+            context.mounted) {
+          snack('Purchase couldn’t complete. Please try again.');
+        }
+      } finally {
+        if (context.mounted) busy.value = false;
+      }
+    }
+
+    Future<void> restore() async {
+      if (!PurchaseService.instance.isConfigured) {
+        snack('Restore will be available with purchases.');
+        return;
+      }
+      busy.value = true;
+      try {
+        final info = await Purchases.restorePurchases();
+        if (!context.mounted) return;
+        if (PurchaseService.instance.entitlementActive(info)) {
+          snack('Purchase restored — welcome back.');
+          context.pop();
+        } else {
+          snack('No previous purchase found on this account.');
+        }
+      } on PlatformException {
+        if (context.mounted) snack('Couldn’t restore right now.');
+      } finally {
+        if (context.mounted) busy.value = false;
+      }
+    }
+
+    final priceLabel = package?.storeProduct.priceString;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Starter Toolkit')),
       body: PageBody(
@@ -40,8 +109,8 @@ class PaywallScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Eyebrow(
-                    'One-time purchase',
+                  Eyebrow(
+                    isPro ? 'You own this' : 'One-time purchase',
                     icon: Icons.workspace_premium_outlined,
                     color: kSage,
                   ),
@@ -109,25 +178,32 @@ class PaywallScreen extends StatelessWidget {
               const SizedBox(height: 12),
             ],
             const SizedBox(height: 8),
-            FilledButton(
-              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'Purchases are being set up — available very soon.',
-                  ),
-                ),
+            if (isPro)
+              FilledButton(
+                onPressed: () => context.go('/tools'),
+                child: const Text('Open the Toolkit'),
+              )
+            else ...[
+              FilledButton(
+                onPressed: busy.value ? null : unlock,
+                child: busy.value
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(
+                        priceLabel == null
+                            ? 'Unlock the Toolkit'
+                            : 'Unlock the Toolkit · $priceLabel',
+                      ),
               ),
-              child: const Text('Unlock the Toolkit'),
-            ),
-            const SizedBox(height: 8),
-            TextButton(
-              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Restore will be available with purchases.'),
-                ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: busy.value ? null : restore,
+                child: const Text('Restore purchase'),
               ),
-              child: const Text('Restore purchase'),
-            ),
+            ],
           ],
         ),
       ),

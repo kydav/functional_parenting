@@ -23,6 +23,7 @@ dependencies:
   google_sign_in: ^6.2.1
   hooks_riverpod: ^2.6.1
   intl: ^0.20.2
+  purchases_flutter: ^8.0.0
   shared_preferences: ^2.3.3
   timezone: ^0.11.1
   url_launcher: ^6.3.2

@@ -15,6 +15,7 @@ import 'package:functional_parenting/features/today/presentation/today_screen.da
 import 'package:functional_parenting/features/toolkit/presentation/action_plan_form_screen.dart';
 import 'package:functional_parenting/features/toolkit/presentation/action_plan_view_screen.dart';
 import 'package:functional_parenting/features/toolkit/presentation/action_plans_screen.dart';
+import 'package:functional_parenting/features/toolkit/presentation/behavior_function_guide_screen.dart';
 import 'package:functional_parenting/features/toolkit/presentation/behavior_log_form_screen.dart';
 import 'package:functional_parenting/features/toolkit/presentation/behavior_tracker_screen.dart';
 import 'package:functional_parenting/features/toolkit/presentation/paywall_screen.dart';
@@ -74,6 +75,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/tools/tracker/:id',
         builder: (context, state) =>
             BehaviorLogFormScreen(logId: state.pathParameters['id']),
+      ),
+      GoRoute(
+        path: '/tools/guide',
+        builder: (context, state) => const BehaviorFunctionGuideScreen(),
       ),
       GoRoute(
         path: '/tools/plans',

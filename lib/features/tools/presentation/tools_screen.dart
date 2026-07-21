@@ -71,8 +71,17 @@ class ToolsScreen extends ConsumerWidget {
           const SizedBox(height: 12),
           _ProTile(
             isPro: isPro,
-            icon: Icons.self_improvement_rounded,
+            icon: Icons.menu_book_rounded,
             iconColor: kSuccessGreen,
+            title: 'Behavior-function guide',
+            subtitle: 'Plain-language reference for the four functions',
+            route: '/tools/guide',
+          ),
+          const SizedBox(height: 12),
+          _ProTile(
+            isPro: isPro,
+            icon: Icons.self_improvement_rounded,
+            iconColor: kWarmAmber,
             title: 'Parent reset audio',
             subtitle: 'Guided audio to regulate on the go',
             route: null, // not built yet — sends to the toolkit

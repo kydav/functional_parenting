@@ -5,12 +5,21 @@ import 'package:functional_parenting/core/providers/engagement_provider.dart';
 import 'package:functional_parenting/core/providers/theme_provider.dart';
 import 'package:functional_parenting/core/router/router.dart';
 import 'package:functional_parenting/core/services/notification_service.dart';
+import 'package:functional_parenting/core/services/purchase_service.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+  // Configure in-app purchases (no-op until RevenueCat keys are set). Must not
+  // block startup.
+  try {
+    await PurchaseService.instance.configure();
+  } catch (e) {
+    debugPrint('Purchase setup skipped at launch: $e');
+  }
 
   final prefs = await SharedPreferences.getInstance();
 
