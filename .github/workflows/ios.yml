@@ -113,6 +113,38 @@ jobs:
           echo "IPA_PATH=$IPA" >> "$GITHUB_ENV"
           echo "Exported IPA: $IPA"
 
+      - name: Verify Apple Sign In entitlement in exported IPA
+        run: |
+          set -euo pipefail
+          APP_DIR="$RUNNER_TEMP/ipa/Payload/Runner.app"
+          rm -rf "$RUNNER_TEMP/ipa_unzipped"
+          mkdir -p "$RUNNER_TEMP/ipa_unzipped"
+          unzip -q "$IPA_PATH" -d "$RUNNER_TEMP/ipa_unzipped"
+          APP_DIR="$RUNNER_TEMP/ipa_unzipped/Payload/Runner.app"
+
+          echo "Inspecting embedded provisioning profile"
+          security cms -D -i "$APP_DIR/embedded.mobileprovision" > "$RUNNER_TEMP/embedded_profile.plist"
+          /usr/libexec/PlistBuddy -c "Print :Name" "$RUNNER_TEMP/embedded_profile.plist"
+          /usr/libexec/PlistBuddy -c "Print :Entitlements:application-identifier" "$RUNNER_TEMP/embedded_profile.plist"
+          /usr/libexec/PlistBuddy -c "Print :Entitlements:com.apple.developer.applesignin" "$RUNNER_TEMP/embedded_profile.plist"
+
+          echo "Inspecting signed app entitlements"
+          codesign -d --entitlements :- "$APP_DIR" > "$RUNNER_TEMP/app_entitlements.plist"
+          /usr/libexec/PlistBuddy -c "Print :application-identifier" "$RUNNER_TEMP/app_entitlements.plist"
+          /usr/libexec/PlistBuddy -c "Print :com.apple.developer.applesignin" "$RUNNER_TEMP/app_entitlements.plist"
+
+          if ! /usr/libexec/PlistBuddy -c "Print :com.apple.developer.applesignin:0" "$RUNNER_TEMP/app_entitlements.plist" | grep -q "Default"; then
+            echo "ERROR: com.apple.developer.applesignin entitlement is missing or invalid in exported app"
+            exit 1
+          fi
+
+          if ! /usr/libexec/PlistBuddy -c "Print :com.apple.developer.applesignin:0" "$RUNNER_TEMP/embedded_profile.plist" | grep -q "Default"; then
+            echo "ERROR: com.apple.developer.applesignin entitlement is missing or invalid in embedded provisioning profile"
+            exit 1
+          fi
+
+          echo "Apple Sign In entitlement verification passed."
+
       - name: Upload to TestFlight
         uses: apple-actions/upload-testflight-build@v3
         with:
