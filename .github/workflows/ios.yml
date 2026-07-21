@@ -93,21 +93,16 @@ jobs:
           </plist>
           EOF
 
-      # Build Flutter artifacts without signing, then archive with explicit
-      # manual signing so CI does not require an Apple account on the runner.
-      # This preserves Runner entitlements in the final signed app.
+      # Archive unsigned to avoid profile resolution during archive (which can
+      # fail in CI for capability-bearing app targets and SPM package targets),
+      # then apply manual signing at export using ExportOptions.plist.
       - name: Build signed IPA
-        env:
-          TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
         run: |
           flutter build ios --release --no-codesign
           xcodebuild -workspace ios/Runner.xcworkspace \
             -scheme Runner -configuration Release \
             -archivePath "$RUNNER_TEMP/Runner.xcarchive" archive \
-            DEVELOPMENT_TEAM="$TEAM_ID" \
-            PRODUCT_BUNDLE_IDENTIFIER="$BUNDLE_ID" \
-            CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY="Apple Distribution"
+            CODE_SIGNING_ALLOWED=NO
           xcodebuild -exportArchive \
             -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
             -exportOptionsPlist ios/ExportOptions.plist \
