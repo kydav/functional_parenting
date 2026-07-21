@@ -93,23 +93,14 @@ jobs:
           </plist>
           EOF
 
-      # Archive UNSIGNED (so a forced profile never reaches the SPM package
-      # targets, which don't support profiles), then sign at export with the
-      # installed distribution profile + cert — no cloud signing, so no elevated
-      # API-key permission is needed.
+      # Build a signed IPA directly so Runner entitlements are preserved in the
+      # final binary. The previous unsigned-archive path could drop optional
+      # capabilities (including Sign in with Apple) from app entitlements.
       - name: Build signed IPA
         run: |
-          flutter build ios --release --no-codesign
-          xcodebuild -workspace ios/Runner.xcworkspace \
-            -scheme Runner -configuration Release \
-            -archivePath "$RUNNER_TEMP/Runner.xcarchive" archive \
-            CODE_SIGNING_ALLOWED=NO
-          xcodebuild -exportArchive \
-            -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
-            -exportOptionsPlist ios/ExportOptions.plist \
-            -exportPath "$RUNNER_TEMP/ipa"
+          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
           # Resolve the exact IPA name (the upload action doesn't expand globs).
-          IPA=$(ls "$RUNNER_TEMP"/ipa/*.ipa | head -1)
+          IPA=$(ls build/ios/ipa/*.ipa | head -1)
           echo "IPA_PATH=$IPA" >> "$GITHUB_ENV"
           echo "Exported IPA: $IPA"
 
