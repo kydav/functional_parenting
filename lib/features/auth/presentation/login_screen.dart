@@ -32,6 +32,7 @@ class LoginScreen extends HookConsumerWidget {
         } else {
           await auth.signIn(email: email.text.trim(), password: password.text);
         }
+        TextInput.finishAutofillContext();
       } catch (e) {
         error.value = e.toString().replaceAll(RegExp(r'^\[.*?\]\s*'), '');
       } finally {

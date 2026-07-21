@@ -267,7 +267,7 @@ class _WorkshopCard extends HookConsumerWidget {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: openRegistration,
-                      child: const Text('Registration page'),
+                      child: const Text('Register'),
                     ),
                   ),
                 if (workshop.joinLink.isNotEmpty) const SizedBox(width: 10),

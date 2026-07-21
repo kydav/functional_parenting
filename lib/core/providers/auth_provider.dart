@@ -1,7 +1,12 @@
+import 'dart:convert';
+import 'dart:math';
+
+import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 /// Auth state. Backed by Firebase Auth when configured; otherwise it runs a
 /// local demo session so the whole app is browsable before
@@ -67,14 +72,45 @@ class AuthNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Native Sign in with Apple (handled by firebase_auth — no extra plugin, and
-  /// it manages the nonce internally). iOS uses the system Apple flow.
+  /// Native Sign in with Apple via the dedicated plugin (ASAuthorizationController)
+  /// → Firebase credential. More reliable than firebase_auth's signInWithProvider
+  /// for Apple, and gives a clean cancellation error.
   Future<void> signInWithApple() async {
-    final provider = AppleAuthProvider()
-      ..addScope('email')
-      ..addScope('name');
-    await _auth!.signInWithProvider(provider);
+    final rawNonce = _generateNonce();
+    final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
+
+    final appleCredential = await SignInWithApple.getAppleIDCredential(
+      scopes: [
+        AppleIDAuthorizationScopes.email,
+        AppleIDAuthorizationScopes.fullName,
+      ],
+      nonce: hashedNonce,
+    );
+
+    final oauthCredential = OAuthProvider(
+      'apple.com',
+    ).credential(idToken: appleCredential.identityToken, rawNonce: rawNonce);
+    final userCred = await _auth!.signInWithCredential(oauthCredential);
+
+    // Apple only returns the name on the very first sign-in.
+    final fullName = [
+      appleCredential.givenName,
+      appleCredential.familyName,
+    ].whereType<String>().where((s) => s.isNotEmpty).join(' ');
+    if (fullName.isNotEmpty && (userCred.user?.displayName?.isEmpty ?? true)) {
+      await userCred.user?.updateDisplayName(fullName);
+    }
     notifyListeners();
+  }
+
+  String _generateNonce([int length = 32]) {
+    const charset =
+        '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    final random = Random.secure();
+    return List.generate(
+      length,
+      (_) => charset[random.nextInt(charset.length)],
+    ).join();
   }
 
   Future<void> sendPasswordReset(String email) async {
