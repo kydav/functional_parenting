@@ -107,8 +107,7 @@ jobs:
             DEVELOPMENT_TEAM="$TEAM_ID" \
             PRODUCT_BUNDLE_IDENTIFIER="$BUNDLE_ID" \
             CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY="Apple Distribution" \
-            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME"
+            CODE_SIGN_IDENTITY="Apple Distribution"
           xcodebuild -exportArchive \
             -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
             -exportOptionsPlist ios/ExportOptions.plist \
@@ -134,7 +133,7 @@ jobs:
           /usr/libexec/PlistBuddy -c "Print :Entitlements:com.apple.developer.applesignin" "$RUNNER_TEMP/embedded_profile.plist"
 
           echo "Inspecting signed app entitlements"
-          codesign -d --entitlements :- "$APP_DIR" > "$RUNNER_TEMP/app_entitlements.plist"
+          codesign -d --entitlements - "$APP_DIR" > "$RUNNER_TEMP/app_entitlements.plist" 2> "$RUNNER_TEMP/codesign_meta.txt"
           /usr/libexec/PlistBuddy -c "Print :application-identifier" "$RUNNER_TEMP/app_entitlements.plist"
           /usr/libexec/PlistBuddy -c "Print :com.apple.developer.applesignin" "$RUNNER_TEMP/app_entitlements.plist"
 
