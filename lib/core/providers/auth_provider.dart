@@ -76,33 +76,45 @@ class AuthNotifier extends ChangeNotifier {
   /// → Firebase credential. More reliable than firebase_auth's signInWithProvider
   /// for Apple, and gives a clean cancellation error.
   Future<void> signInWithApple() async {
-    final rawNonce = _generateNonce();
-    final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
+    try {
+      final rawNonce = _generateNonce();
+      final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
 
-    final appleCredential = await SignInWithApple.getAppleIDCredential(
-      scopes: [
-        AppleIDAuthorizationScopes.email,
-        AppleIDAuthorizationScopes.fullName,
-      ],
-      nonce: hashedNonce,
-    );
+      final appleCredential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        nonce: hashedNonce,
+      );
 
-    final oauthCredential = OAuthProvider('apple.com').credential(
-      idToken: appleCredential.identityToken,
-      rawNonce: rawNonce,
-      accessToken: appleCredential.authorizationCode,
-    );
-    final userCred = await _auth!.signInWithCredential(oauthCredential);
+      final identityToken = appleCredential.identityToken;
+      if (identityToken == null || identityToken.isEmpty) {
+        throw StateError('Apple sign-in succeeded without an identity token.');
+      }
 
-    // Apple only returns the name on the very first sign-in.
-    final fullName = [
-      appleCredential.givenName,
-      appleCredential.familyName,
-    ].whereType<String>().where((s) => s.isNotEmpty).join(' ');
-    if (fullName.isNotEmpty && (userCred.user?.displayName?.isEmpty ?? true)) {
-      await userCred.user?.updateDisplayName(fullName);
+      final oauthCredential = OAuthProvider(
+        'apple.com',
+      ).credential(idToken: identityToken, rawNonce: rawNonce);
+      final userCred = await _auth!.signInWithCredential(oauthCredential);
+
+      // Apple only returns the name on the very first sign-in.
+      final fullName = [
+        appleCredential.givenName,
+        appleCredential.familyName,
+      ].whereType<String>().where((s) => s.isNotEmpty).join(' ');
+      if (fullName.isNotEmpty &&
+          (userCred.user?.displayName?.isEmpty ?? true)) {
+        await userCred.user?.updateDisplayName(fullName);
+      }
+      notifyListeners();
+    } on SignInWithAppleAuthorizationException catch (error) {
+      final details = error.message.trim();
+      final message = details.isEmpty
+          ? 'Apple sign-in failed (${error.code}).'
+          : 'Apple sign-in failed (${error.code}): $details';
+      throw Exception(message);
     }
-    notifyListeners();
   }
 
   String _generateNonce([int length = 32]) {
