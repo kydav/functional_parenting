@@ -174,6 +174,52 @@ class ToolTile extends StatelessWidget {
   }
 }
 
+/// A centered empty-state placeholder with an icon, message, and optional CTA.
+class EmptyState extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String message;
+  final Widget? action;
+  const EmptyState({
+    required this.icon,
+    required this.title,
+    required this.message,
+    this.action,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 48, color: context.colors.textSecondary),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: context.colors.textSecondary,
+                height: 1.5,
+              ),
+            ),
+            if (action != null) ...[const SizedBox(height: 20), action!],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Badge marking premium features inside the free app.
 class ProBadge extends StatelessWidget {
   const ProBadge({super.key});

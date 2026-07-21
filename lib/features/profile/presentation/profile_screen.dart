@@ -97,14 +97,8 @@ class ProfileScreen extends ConsumerWidget {
                   title: 'Starter Toolkit',
                   price: 'one-time',
                   desc:
-                      'Full toolkit, ABC tracker, worksheets, reset audio library.',
-                ),
-                const Divider(color: Colors.white12, height: 24),
-                const _PlanRow(
-                  title: 'Functional Parenting Course',
-                  price: 'course',
-                  desc:
-                      '8 guided modules — video, audio, reflection, and planning tools.',
+                      'Behavior tracker, Family Action Plan builder, and the '
+                      'behavior-function guide — yours to keep.',
                 ),
                 const SizedBox(height: 16),
                 SizedBox(
@@ -114,14 +108,8 @@ class ProfileScreen extends ConsumerWidget {
                       backgroundColor: kSage,
                       foregroundColor: kNavy,
                     ),
-                    onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Purchases (in-app / RevenueCat) — coming next.',
-                        ),
-                      ),
-                    ),
-                    child: const Text('See plans'),
+                    onPressed: () => context.push('/paywall'),
+                    child: const Text('See the Toolkit'),
                   ),
                 ),
               ],

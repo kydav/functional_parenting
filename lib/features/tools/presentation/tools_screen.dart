@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:functional_parenting/core/presentation/widgets.dart';
+import 'package:functional_parenting/core/providers/pro_provider.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-class ToolsScreen extends StatelessWidget {
+class ToolsScreen extends ConsumerWidget {
   const ToolsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isPro = ref.watch(proProvider);
+
     return PageBody(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,27 +49,33 @@ class ToolsScreen extends StatelessWidget {
           ),
 
           const SizedBox(height: 28),
-          const Eyebrow('Full toolkit', color: kSageDeep),
+          const Eyebrow('Starter Toolkit', color: kSageDeep),
           const SizedBox(height: 10),
-          const _LockedTile(
-            title: 'ABC behavior tracker',
-            subtitle: 'Log antecedent, behavior, consequence over time',
+          _ProTile(
+            isPro: isPro,
+            icon: Icons.checklist_rounded,
+            iconColor: kBlueDeep,
+            title: 'Behavior tracker',
+            subtitle: 'Log antecedent, behavior, and consequence over time',
+            route: '/tools/tracker',
           ),
           const SizedBox(height: 12),
-          const _LockedTile(
-            title: 'Behavior goal worksheets',
-            subtitle: 'Set and track a specific behavior goal',
+          _ProTile(
+            isPro: isPro,
+            icon: Icons.description_outlined,
+            iconColor: kSageDeep,
+            title: 'Action plans',
+            subtitle: 'Build a one-page Family Action Plan',
+            route: '/tools/plans',
           ),
           const SizedBox(height: 12),
-          const _LockedTile(
-            title: 'Reinforcement planner',
-            subtitle:
-                'Plan consequences and reinforcement that fit the function',
-          ),
-          const SizedBox(height: 12),
-          const _LockedTile(
-            title: 'Parent reset audio collection',
+          _ProTile(
+            isPro: isPro,
+            icon: Icons.self_improvement_rounded,
+            iconColor: kSuccessGreen,
+            title: 'Parent reset audio',
             subtitle: 'Guided audio to regulate on the go',
+            route: null, // not built yet — sends to the toolkit
           ),
         ],
       ),
@@ -73,20 +83,32 @@ class ToolsScreen extends StatelessWidget {
   }
 }
 
-class _LockedTile extends StatelessWidget {
+class _ProTile extends StatelessWidget {
+  final bool isPro;
+  final IconData icon;
+  final Color iconColor;
   final String title;
   final String subtitle;
-  const _LockedTile({required this.title, required this.subtitle});
+  final String? route;
+  const _ProTile({
+    required this.isPro,
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    required this.route,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final unlocked = isPro && route != null;
     return ToolTile(
-      icon: Icons.lock_outline_rounded,
-      iconColor: context.colors.textSecondary,
+      icon: unlocked ? icon : Icons.lock_outline_rounded,
+      iconColor: unlocked ? iconColor : context.colors.textSecondary,
       title: title,
       subtitle: subtitle,
-      trailing: const ProBadge(),
-      onTap: () => context.go('/profile'),
+      trailing: unlocked ? null : const ProBadge(),
+      onTap: () => unlocked ? context.push(route!) : context.push('/paywall'),
     );
   }
 }

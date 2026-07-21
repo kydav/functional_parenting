@@ -12,6 +12,12 @@ import 'package:functional_parenting/features/profile/presentation/profile_scree
 import 'package:functional_parenting/features/reflections_screen/reflections_screen.dart';
 import 'package:functional_parenting/features/reset/presentation/reset_screen.dart';
 import 'package:functional_parenting/features/today/presentation/today_screen.dart';
+import 'package:functional_parenting/features/toolkit/presentation/action_plan_form_screen.dart';
+import 'package:functional_parenting/features/toolkit/presentation/action_plan_view_screen.dart';
+import 'package:functional_parenting/features/toolkit/presentation/action_plans_screen.dart';
+import 'package:functional_parenting/features/toolkit/presentation/behavior_log_form_screen.dart';
+import 'package:functional_parenting/features/toolkit/presentation/behavior_tracker_screen.dart';
+import 'package:functional_parenting/features/toolkit/presentation/paywall_screen.dart';
 import 'package:functional_parenting/features/tools/presentation/assessment_screen.dart';
 import 'package:functional_parenting/features/tools/presentation/decision_tool_screen.dart';
 import 'package:functional_parenting/features/tools/presentation/scripts_screen.dart';
@@ -50,6 +56,42 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/account',
         builder: (context, state) => const AccountScreen(),
+      ),
+      // ── Pro toolkit (full-screen flows) ──────────────────────────────────
+      GoRoute(
+        path: '/paywall',
+        builder: (context, state) => const PaywallScreen(),
+      ),
+      GoRoute(
+        path: '/tools/tracker',
+        builder: (context, state) => const BehaviorTrackerScreen(),
+      ),
+      GoRoute(
+        path: '/tools/tracker/new',
+        builder: (context, state) => const BehaviorLogFormScreen(),
+      ),
+      GoRoute(
+        path: '/tools/tracker/:id',
+        builder: (context, state) =>
+            BehaviorLogFormScreen(logId: state.pathParameters['id']),
+      ),
+      GoRoute(
+        path: '/tools/plans',
+        builder: (context, state) => const ActionPlansScreen(),
+      ),
+      GoRoute(
+        path: '/tools/plans/new',
+        builder: (context, state) => const ActionPlanFormScreen(),
+      ),
+      GoRoute(
+        path: '/tools/plans/:id/edit',
+        builder: (context, state) =>
+            ActionPlanFormScreen(planId: state.pathParameters['id']),
+      ),
+      GoRoute(
+        path: '/tools/plans/:id',
+        builder: (context, state) =>
+            ActionPlanViewScreen(planId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/reflections',
