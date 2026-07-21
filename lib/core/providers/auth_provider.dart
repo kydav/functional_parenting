@@ -1,12 +1,7 @@
-import 'dart:convert';
-import 'dart:math';
-
-import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 /// Auth state. Backed by Firebase Auth when configured; otherwise it runs a
 /// local demo session so the whole app is browsable before
@@ -72,59 +67,11 @@ class AuthNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Native Sign in with Apple via the dedicated plugin (ASAuthorizationController)
-  /// → Firebase credential. More reliable than firebase_auth's signInWithProvider
-  /// for Apple, and gives a clean cancellation error.
+  /// Native Sign in with Apple via Firebase's provider flow.
   Future<void> signInWithApple() async {
-    try {
-      final rawNonce = _generateNonce();
-      final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
-
-      final appleCredential = await SignInWithApple.getAppleIDCredential(
-        scopes: [
-          AppleIDAuthorizationScopes.email,
-          AppleIDAuthorizationScopes.fullName,
-        ],
-        nonce: hashedNonce,
-      );
-
-      final identityToken = appleCredential.identityToken;
-      if (identityToken == null || identityToken.isEmpty) {
-        throw StateError('Apple sign-in succeeded without an identity token.');
-      }
-
-      final oauthCredential = OAuthProvider(
-        'apple.com',
-      ).credential(idToken: identityToken, rawNonce: rawNonce);
-      final userCred = await _auth!.signInWithCredential(oauthCredential);
-
-      // Apple only returns the name on the very first sign-in.
-      final fullName = [
-        appleCredential.givenName,
-        appleCredential.familyName,
-      ].whereType<String>().where((s) => s.isNotEmpty).join(' ');
-      if (fullName.isNotEmpty &&
-          (userCred.user?.displayName?.isEmpty ?? true)) {
-        await userCred.user?.updateDisplayName(fullName);
-      }
-      notifyListeners();
-    } on SignInWithAppleAuthorizationException catch (error) {
-      final details = error.message.trim();
-      final message = details.isEmpty
-          ? 'Apple sign-in failed (${error.code}).'
-          : 'Apple sign-in failed (${error.code}): $details';
-      throw Exception(message);
-    }
-  }
-
-  String _generateNonce([int length = 32]) {
-    const charset =
-        '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
-    final random = Random.secure();
-    return List.generate(
-      length,
-      (_) => charset[random.nextInt(charset.length)],
-    ).join();
+    final provider = AppleAuthProvider();
+    await _auth!.signInWithProvider(provider);
+    notifyListeners();
   }
 
   Future<void> sendPasswordReset(String email) async {
