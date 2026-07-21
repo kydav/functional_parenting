@@ -87,9 +87,11 @@ class AuthNotifier extends ChangeNotifier {
       nonce: hashedNonce,
     );
 
-    final oauthCredential = OAuthProvider(
-      'apple.com',
-    ).credential(idToken: appleCredential.identityToken, rawNonce: rawNonce);
+    final oauthCredential = OAuthProvider('apple.com').credential(
+      idToken: appleCredential.identityToken,
+      rawNonce: rawNonce,
+      accessToken: appleCredential.authorizationCode,
+    );
     final userCred = await _auth!.signInWithCredential(oauthCredential);
 
     // Apple only returns the name on the very first sign-in.
