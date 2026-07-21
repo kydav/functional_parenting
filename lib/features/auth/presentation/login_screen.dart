@@ -43,10 +43,17 @@ class LoginScreen extends HookConsumerWidget {
       try {
         await action();
       } catch (e) {
-        final msg = e.toString();
-        // Don't surface an error when the user just cancels the flow.
-        if (!msg.toLowerCase().contains('cancel')) {
-          error.value = msg.replaceAll(RegExp(r'^\[.*?\]\s*'), '');
+        final msg = e.toString().toLowerCase();
+        // Treat a dismissed flow as a no-op, not an error. Apple's native flow
+        // returns AuthorizationError 1000/1001 when the user backs out (Google
+        // reports a "cancel" message).
+        final cancelled =
+            msg.contains('cancel') ||
+            msg.contains('error 1000') ||
+            msg.contains('error 1001') ||
+            msg.contains('.canceled');
+        if (!cancelled) {
+          error.value = e.toString().replaceAll(RegExp(r'^\[.*?\]\s*'), '');
         }
       } finally {
         busy.value = false;
