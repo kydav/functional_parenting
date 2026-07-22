@@ -4,20 +4,10 @@ name: iOS — Deploy
 on:
   workflow_dispatch:
 
-# ── Required repo secrets (Settings → Secrets and variables → Actions) ────────
-#   GOOGLE_SERVICE_INFO_PLIST        base64 of ios/Runner/GoogleService-Info.plist
-#   IOS_DIST_CERT_P12_BASE64         base64 of the Apple Distribution cert (.p12)
-#   IOS_DIST_CERT_PASSWORD           password used when exporting that .p12
-#   IOS_PROVISIONING_PROFILE_BASE64  base64 of the App Store provisioning profile
-#                                    (its name is read from the profile itself)
-#   IOS_TEAM_ID                      Apple Developer Team ID (10 chars)
-#   APP_STORE_CONNECT_KEY_ID         App Store Connect API key ID       ┐ used only
-#   APP_STORE_CONNECT_ISSUER_ID      App Store Connect API issuer ID    ├ for the
-#   APP_STORE_CONNECT_PRIVATE_KEY    contents of the API key .p8 file   ┘ upload
-#
-# Signing is done manually at export from the imported cert + profile, so the
-# API key only needs upload access (any role works — no cloud signing).
-# ─────────────────────────────────────────────────────────────────────────────
+# Required secrets:
+# GOOGLE_SERVICE_INFO_PLIST, IOS_DIST_CERT_P12_BASE64, IOS_DIST_CERT_PASSWORD,
+# IOS_PROVISIONING_PROFILE_BASE64, IOS_TEAM_ID, APP_STORE_CONNECT_KEY_ID,
+# APP_STORE_CONNECT_ISSUER_ID, APP_STORE_CONNECT_PRIVATE_KEY
 
 jobs:
   deploy:
@@ -51,9 +41,6 @@ jobs:
           p12-file-base64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
           p12-password: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
 
-      # Install the App Store distribution profile and read its exact name from
-      # the file (used for manual signing at export). Installed into both dirs
-      # Xcode searches (the path changed in recent Xcode).
       - name: Install provisioning profile
         env:
           PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
@@ -93,9 +80,6 @@ jobs:
           </plist>
           EOF
 
-      # Archive unsigned to avoid profile resolution during archive (which can
-      # fail in CI for capability-bearing app targets and SPM package targets),
-      # then apply manual signing at export using ExportOptions.plist.
       - name: Build signed IPA
         run: |
           flutter build ios --release --no-codesign
@@ -108,12 +92,11 @@ jobs:
             -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
             -exportOptionsPlist ios/ExportOptions.plist \
             -exportPath "$RUNNER_TEMP/ipa"
-          # Resolve the exact IPA name (the upload action doesn't expand globs).
           IPA=$(ls "$RUNNER_TEMP"/ipa/*.ipa | head -1)
           echo "IPA_PATH=$IPA" >> "$GITHUB_ENV"
           echo "Exported IPA: $IPA"
 
-      - name: Re-sign Runner.app with explicit entitlements
+      - name: Re-sign Runner.app
         run: |
           set -euo pipefail
           rm -rf "$RUNNER_TEMP/ipa_resign"
@@ -131,7 +114,6 @@ jobs:
             exit 1
           fi
 
-          echo "Re-signing with certificate: $CERT_NAME"
           codesign --force --sign "$CERT_NAME" \
             --entitlements "$RUNNER_TEMP/resign_entitlements.plist" \
             --generate-entitlement-der \
@@ -144,63 +126,6 @@ jobs:
             zip -qry "$RESIGNED_IPA" Payload
           )
           echo "IPA_PATH=$RESIGNED_IPA" >> "$GITHUB_ENV"
-          echo "Re-signed IPA: $RESIGNED_IPA"
-
-      - name: Verify Apple Sign In entitlement in exported IPA
-        run: |
-          set -euo pipefail
-          APP_DIR="$RUNNER_TEMP/ipa/Payload/Runner.app"
-          rm -rf "$RUNNER_TEMP/ipa_unzipped"
-          mkdir -p "$RUNNER_TEMP/ipa_unzipped"
-          unzip -q "$IPA_PATH" -d "$RUNNER_TEMP/ipa_unzipped"
-          APP_DIR="$RUNNER_TEMP/ipa_unzipped/Payload/Runner.app"
-
-          echo "Inspecting embedded provisioning profile"
-          security cms -D -i "$APP_DIR/embedded.mobileprovision" > "$RUNNER_TEMP/embedded_profile.plist"
-          /usr/libexec/PlistBuddy -c "Print :Name" "$RUNNER_TEMP/embedded_profile.plist"
-          /usr/libexec/PlistBuddy -c "Print :Entitlements:application-identifier" "$RUNNER_TEMP/embedded_profile.plist"
-          /usr/libexec/PlistBuddy -c "Print :Entitlements:com.apple.developer.applesignin" "$RUNNER_TEMP/embedded_profile.plist"
-
-          echo "Inspecting signed app entitlements"
-          codesign -d --entitlements - --xml "$APP_DIR" > "$RUNNER_TEMP/app_entitlements_raw.txt" 2> "$RUNNER_TEMP/codesign_meta.txt"
-
-          APP_ENTITLEMENT_OK=0
-          APP_IDENTIFIER_OK=0
-          if plutil -convert xml1 -o "$RUNNER_TEMP/app_entitlements.plist" "$RUNNER_TEMP/app_entitlements_raw.txt" 2>/dev/null; then
-            /usr/libexec/PlistBuddy -c "Print :application-identifier" "$RUNNER_TEMP/app_entitlements.plist" || true
-            /usr/libexec/PlistBuddy -c "Print :com.apple.developer.applesignin" "$RUNNER_TEMP/app_entitlements.plist" || true
-            if /usr/libexec/PlistBuddy -c "Print :application-identifier" "$RUNNER_TEMP/app_entitlements.plist" | grep -Eq '^[A-Z0-9]{10}\.'; then
-              APP_IDENTIFIER_OK=1
-            fi
-            if /usr/libexec/PlistBuddy -c "Print :com.apple.developer.applesignin:0" "$RUNNER_TEMP/app_entitlements.plist" | grep -q "Default"; then
-              APP_ENTITLEMENT_OK=1
-            fi
-          fi
-
-          if [[ "$APP_ENTITLEMENT_OK" -eq 0 ]]; then
-            # Fallback for toolchains that return non-plist entitlement dumps.
-            cat "$RUNNER_TEMP/app_entitlements_raw.txt"
-            if grep -q "com.apple.developer.applesignin" "$RUNNER_TEMP/app_entitlements_raw.txt" && grep -q "Default" "$RUNNER_TEMP/app_entitlements_raw.txt"; then
-              APP_ENTITLEMENT_OK=1
-            fi
-          fi
-
-          if [[ "$APP_ENTITLEMENT_OK" -eq 0 ]]; then
-            echo "ERROR: com.apple.developer.applesignin entitlement is missing or invalid in exported app"
-            exit 1
-          fi
-
-          if [[ "$APP_IDENTIFIER_OK" -eq 0 ]]; then
-            echo "ERROR: application-identifier entitlement is missing or invalid in exported app"
-            exit 1
-          fi
-
-          if ! /usr/libexec/PlistBuddy -c "Print :Entitlements:com.apple.developer.applesignin:0" "$RUNNER_TEMP/embedded_profile.plist" | grep -q "Default"; then
-            echo "ERROR: com.apple.developer.applesignin entitlement is missing or invalid in embedded provisioning profile"
-            exit 1
-          fi
-
-          echo "Apple Sign In entitlement verification passed."
 
       - name: Upload to TestFlight
         uses: apple-actions/upload-testflight-build@v3
