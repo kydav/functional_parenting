@@ -102,7 +102,8 @@ jobs:
           xcodebuild -workspace ios/Runner.xcworkspace \
             -scheme Runner -configuration Release \
             -archivePath "$RUNNER_TEMP/Runner.xcarchive" archive \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_ENTITLEMENTS=Runner/Runner.entitlements
           xcodebuild -exportArchive \
             -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
             -exportOptionsPlist ios/ExportOptions.plist \
