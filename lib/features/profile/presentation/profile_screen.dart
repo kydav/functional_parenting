@@ -4,6 +4,7 @@ import 'package:functional_parenting/core/presentation/widgets.dart';
 import 'package:functional_parenting/core/providers/admin_provider.dart';
 import 'package:functional_parenting/core/providers/auth_provider.dart';
 import 'package:functional_parenting/core/providers/engagement_provider.dart';
+import 'package:functional_parenting/core/providers/pro_provider.dart';
 import 'package:functional_parenting/core/providers/theme_provider.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
@@ -129,6 +130,18 @@ class ProfileScreen extends ConsumerWidget {
               icon: Icons.event_available_outlined,
               label: 'Manage workshops',
               onTap: () => context.push('/admin/workshops'),
+            ),
+            _SettingsTile(
+              icon: Icons.workspace_premium_outlined,
+              label: 'Pro features (preview)',
+              subtitle: ref.watch(adminProPreviewProvider)
+                  ? 'On — you see the paid toolkit'
+                  : 'Off — previewing the free experience',
+              trailing: Switch(
+                value: ref.watch(adminProPreviewProvider),
+                onChanged: (v) =>
+                    ref.read(adminProPreviewProvider.notifier).set(value: v),
+              ),
             ),
             const SizedBox(height: 24),
           ],
@@ -289,11 +302,13 @@ class _PlanRow extends StatelessWidget {
 class _SettingsTile extends StatelessWidget {
   final IconData icon;
   final String label;
+  final String? subtitle;
   final Widget? trailing;
   final VoidCallback? onTap;
   const _SettingsTile({
     required this.icon,
     required this.label,
+    this.subtitle,
     this.trailing,
     this.onTap,
   });
@@ -310,11 +325,26 @@ class _SettingsTile extends StatelessWidget {
             Icon(icon, size: 20, color: context.colors.textPrimary),
             const SizedBox(width: 14),
             Expanded(
-              child: Text(
-                label,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: context.colors.textPrimary,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: context.colors.textPrimary,
+                    ),
+                  ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle!,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: context.colors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
             trailing ??
