@@ -183,7 +183,7 @@ jobs:
             exit 1
           fi
 
-          if ! /usr/libexec/PlistBuddy -c "Print :com.apple.developer.applesignin:0" "$RUNNER_TEMP/embedded_profile.plist" | grep -q "Default"; then
+          if ! /usr/libexec/PlistBuddy -c "Print :Entitlements:com.apple.developer.applesignin:0" "$RUNNER_TEMP/embedded_profile.plist" | grep -q "Default"; then
             echo "ERROR: com.apple.developer.applesignin entitlement is missing or invalid in embedded provisioning profile"
             exit 1
           fi
