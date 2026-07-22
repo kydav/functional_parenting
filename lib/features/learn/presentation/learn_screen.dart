@@ -130,22 +130,23 @@ class LearnScreen extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 8),
-          SoftCard(
-            color: kSage.withValues(alpha: 0.35),
-            child: const Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Go deeper with the self-paced course — 8 guided modules with video, audio, and planning tools.',
-                    style: TextStyle(height: 1.5, fontSize: 14),
-                  ),
-                ),
-                SizedBox(width: 12),
-                ProBadge(),
-              ],
-            ),
-          ),
+          // TODO(kyler): Add this section when we implement subscriptions
+          // const SizedBox(height: 8),
+          // SoftCard(
+          //   color: kSage.withValues(alpha: 0.35),
+          //   child: const Row(
+          //     children: [
+          //       Expanded(
+          //         child: Text(
+          //           'Go deeper with the self-paced course — 8 guided modules with video, audio, and planning tools.',
+          //           style: TextStyle(height: 1.5, fontSize: 14),
+          //         ),
+          //       ),
+          //       SizedBox(width: 12),
+          //       ProBadge(),
+          //     ],
+          //   ),
+          // ),
         ],
       ),
     );

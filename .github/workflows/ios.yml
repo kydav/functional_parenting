@@ -121,6 +121,9 @@ jobs:
           unzip -q "$IPA_PATH" -d "$RUNNER_TEMP/ipa_resign"
 
           APP_DIR="$RUNNER_TEMP/ipa_resign/Payload/Runner.app"
+          security cms -D -i "$APP_DIR/embedded.mobileprovision" > "$RUNNER_TEMP/resign_profile.plist"
+          /usr/libexec/PlistBuddy -x -c "Print :Entitlements" "$RUNNER_TEMP/resign_profile.plist" > "$RUNNER_TEMP/resign_entitlements.plist"
+
           CERT_NAME=$(security find-identity -v -p codesigning | awk -F '"' '/Apple Distribution/ {print $2; exit}')
           if [[ -z "$CERT_NAME" ]]; then
             echo "ERROR: Apple Distribution signing identity not found in keychain"
@@ -130,7 +133,7 @@ jobs:
 
           echo "Re-signing with certificate: $CERT_NAME"
           codesign --force --sign "$CERT_NAME" \
-            --entitlements ios/Runner/Runner.entitlements \
+            --entitlements "$RUNNER_TEMP/resign_entitlements.plist" \
             --generate-entitlement-der \
             "$APP_DIR"
 
@@ -162,9 +165,13 @@ jobs:
           codesign -d --entitlements - --xml "$APP_DIR" > "$RUNNER_TEMP/app_entitlements_raw.txt" 2> "$RUNNER_TEMP/codesign_meta.txt"
 
           APP_ENTITLEMENT_OK=0
+          APP_IDENTIFIER_OK=0
           if plutil -convert xml1 -o "$RUNNER_TEMP/app_entitlements.plist" "$RUNNER_TEMP/app_entitlements_raw.txt" 2>/dev/null; then
             /usr/libexec/PlistBuddy -c "Print :application-identifier" "$RUNNER_TEMP/app_entitlements.plist" || true
             /usr/libexec/PlistBuddy -c "Print :com.apple.developer.applesignin" "$RUNNER_TEMP/app_entitlements.plist" || true
+            if /usr/libexec/PlistBuddy -c "Print :application-identifier" "$RUNNER_TEMP/app_entitlements.plist" | grep -Eq '^[A-Z0-9]{10}\.'; then
+              APP_IDENTIFIER_OK=1
+            fi
             if /usr/libexec/PlistBuddy -c "Print :com.apple.developer.applesignin:0" "$RUNNER_TEMP/app_entitlements.plist" | grep -q "Default"; then
               APP_ENTITLEMENT_OK=1
             fi
@@ -180,6 +187,11 @@ jobs:
 
           if [[ "$APP_ENTITLEMENT_OK" -eq 0 ]]; then
             echo "ERROR: com.apple.developer.applesignin entitlement is missing or invalid in exported app"
+            exit 1
+          fi
+
+          if [[ "$APP_IDENTIFIER_OK" -eq 0 ]]; then
+            echo "ERROR: application-identifier entitlement is missing or invalid in exported app"
             exit 1
           fi
 
