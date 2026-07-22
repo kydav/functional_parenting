@@ -113,6 +113,36 @@ jobs:
           echo "IPA_PATH=$IPA" >> "$GITHUB_ENV"
           echo "Exported IPA: $IPA"
 
+      - name: Re-sign Runner.app with explicit entitlements
+        run: |
+          set -euo pipefail
+          rm -rf "$RUNNER_TEMP/ipa_resign"
+          mkdir -p "$RUNNER_TEMP/ipa_resign"
+          unzip -q "$IPA_PATH" -d "$RUNNER_TEMP/ipa_resign"
+
+          APP_DIR="$RUNNER_TEMP/ipa_resign/Payload/Runner.app"
+          CERT_NAME=$(security find-identity -v -p codesigning | awk -F '"' '/Apple Distribution/ {print $2; exit}')
+          if [[ -z "$CERT_NAME" ]]; then
+            echo "ERROR: Apple Distribution signing identity not found in keychain"
+            security find-identity -v -p codesigning || true
+            exit 1
+          fi
+
+          echo "Re-signing with certificate: $CERT_NAME"
+          codesign --force --sign "$CERT_NAME" \
+            --entitlements ios/Runner/Runner.entitlements \
+            --generate-entitlement-der \
+            "$APP_DIR"
+
+          RESIGNED_IPA="$RUNNER_TEMP/ipa/resigned.ipa"
+          rm -f "$RESIGNED_IPA"
+          (
+            cd "$RUNNER_TEMP/ipa_resign"
+            zip -qry "$RESIGNED_IPA" Payload
+          )
+          echo "IPA_PATH=$RESIGNED_IPA" >> "$GITHUB_ENV"
+          echo "Re-signed IPA: $RESIGNED_IPA"
+
       - name: Verify Apple Sign In entitlement in exported IPA
         run: |
           set -euo pipefail
