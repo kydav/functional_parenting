@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:functional_parenting/core/models/action_plan.dart';
 import 'package:functional_parenting/core/models/behavior_log.dart';
+import 'package:functional_parenting/core/models/worksheet_response.dart';
 
 /// Private per-user store for the Pro toolkit (ABC behavior logs + action
 /// plans). Lives under `users/{uid}/…`, which the security rules already lock
@@ -15,6 +16,8 @@ class ToolkitRepository {
       _db.collection('users').doc(_uid).collection('behaviorLogs');
   CollectionReference<Map<String, dynamic>> get _plans =>
       _db.collection('users').doc(_uid).collection('actionPlans');
+  CollectionReference<Map<String, dynamic>> get _worksheets =>
+      _db.collection('users').doc(_uid).collection('worksheets');
 
   // ── Behavior logs ────────────────────────────────────────────────────────
 
@@ -47,4 +50,24 @@ class ToolkitRepository {
   }
 
   Future<void> deletePlan(String id) => _plans.doc(id).delete();
+
+  // ── Worksheets ─────────────────────────────────────────────────────────────
+  // One doc per worksheet (keyed by its stable id), holding the latest answers.
+
+  Stream<WorksheetResponse> watchWorksheet(String id) => _worksheets
+      .doc(id)
+      .snapshots()
+      .map(
+        (doc) => doc.exists
+            ? WorksheetResponse.fromDoc(doc)
+            : WorksheetResponse(id: id),
+      );
+
+  Future<void> saveWorksheet(String id, Map<String, String> answers) =>
+      _worksheets
+          .doc(id)
+          .set(
+            WorksheetResponse(id: id, answers: answers).toMap(),
+            SetOptions(merge: true),
+          );
 }

@@ -184,24 +184,28 @@ class PaywallScreen extends HookConsumerWidget {
                 child: const Text('Open the Toolkit'),
               )
             else ...[
-              FilledButton(
-                onPressed: busy.value ? null : unlock,
-                child: busy.value
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(
-                        priceLabel == null
-                            ? 'Unlock the Toolkit'
-                            : 'Unlock the Toolkit · $priceLabel',
-                      ),
+              Align(
+                child: FilledButton(
+                  onPressed: busy.value ? null : unlock,
+                  child: busy.value
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(
+                          priceLabel == null
+                              ? 'Unlock the Toolkit'
+                              : 'Unlock the Toolkit · $priceLabel',
+                        ),
+                ),
               ),
               const SizedBox(height: 8),
-              TextButton(
-                onPressed: busy.value ? null : restore,
-                child: const Text('Restore purchase'),
+              Align(
+                child: TextButton(
+                  onPressed: busy.value ? null : restore,
+                  child: const Text('Restore purchase'),
+                ),
               ),
             ],
           ],

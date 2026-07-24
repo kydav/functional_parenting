@@ -81,6 +81,7 @@ class _ItemCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final bool active;
+  final bool pro;
   final ValueChanged<bool>? onToggle;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
@@ -89,6 +90,7 @@ class _ItemCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.active,
+    this.pro = false,
     this.onToggle,
     this.onEdit,
     this.onDelete,
@@ -108,11 +110,25 @@ class _ItemCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleMedium,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: Theme.of(context).textTheme.titleMedium,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (pro) ...[
+                        const SizedBox(width: 8),
+                        const Padding(
+                          padding: EdgeInsets.only(top: 2),
+                          child: ProBadge(),
+                        ),
+                      ],
+                    ],
                   ),
                   if (subtitle.isNotEmpty) ...[
                     const SizedBox(height: 2),
@@ -249,6 +265,7 @@ class _TipsTab extends ConsumerWidget {
           title: t.text,
           subtitle: t.source ?? '',
           active: t.active,
+          pro: t.pro,
           onToggle: repo == null
               ? null
               : (v) => repo.saveTip(t.copyWith(active: v)),
@@ -280,6 +297,7 @@ class _TipSheet extends HookWidget {
   Widget build(BuildContext context) {
     final text = useTextEditingController(text: existing?.text ?? '');
     final source = useTextEditingController(text: existing?.source ?? '');
+    final pro = useState(existing?.pro ?? false);
     return _SheetScaffold(
       title: existing == null ? 'New tip' : 'Edit tip',
       onSave: () {
@@ -288,6 +306,7 @@ class _TipSheet extends HookWidget {
           (existing ?? ParentingTip(id: '', text: '', order: order)).copyWith(
             text: text.text.trim(),
             source: source.text.trim().isEmpty ? null : source.text.trim(),
+            pro: pro.value,
           ),
         );
         return true;
@@ -296,6 +315,7 @@ class _TipSheet extends HookWidget {
         _Field(label: 'Tip', controller: text, maxLines: 4),
         _Field(label: 'Source (optional)', controller: source),
       ],
+      extras: [_ProToggle(value: pro.value, onChanged: (v) => pro.value = v)],
     );
   }
 }
@@ -327,6 +347,7 @@ class _ChallengesTab extends ConsumerWidget {
           title: c.title,
           subtitle: c.description,
           active: c.active,
+          pro: c.pro,
           onToggle: repo == null
               ? null
               : (v) => repo.saveChallenge(c.copyWith(active: v)),
@@ -360,6 +381,7 @@ class _ChallengeSheet extends HookWidget {
   Widget build(BuildContext context) {
     final title = useTextEditingController(text: existing?.title ?? '');
     final desc = useTextEditingController(text: existing?.description ?? '');
+    final pro = useState(existing?.pro ?? false);
     return _SheetScaffold(
       title: existing == null ? 'New challenge' : 'Edit challenge',
       onSave: () {
@@ -375,6 +397,7 @@ class _ChallengeSheet extends HookWidget {
               .copyWith(
                 title: title.text.trim(),
                 description: desc.text.trim(),
+                pro: pro.value,
               ),
         );
         return true;
@@ -383,6 +406,7 @@ class _ChallengeSheet extends HookWidget {
         _Field(label: 'Title', controller: title),
         _Field(label: 'Description', controller: desc, maxLines: 4),
       ],
+      extras: [_ProToggle(value: pro.value, onChanged: (v) => pro.value = v)],
     );
   }
 }
@@ -414,6 +438,7 @@ class _ReflectionsTab extends ConsumerWidget {
           title: r.prompt,
           subtitle: '',
           active: r.active,
+          pro: r.pro,
           onToggle: repo == null
               ? null
               : (v) => repo.saveReflection(r.copyWith(active: v)),
@@ -446,19 +471,21 @@ class _ReflectionSheet extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final prompt = useTextEditingController(text: existing?.prompt ?? '');
+    final pro = useState(existing?.pro ?? false);
     return _SheetScaffold(
       title: existing == null ? 'New reflection' : 'Edit reflection',
       onSave: () {
         if (prompt.text.trim().isEmpty) return false;
         onSave(
           (existing ?? ReflectionPrompt(id: '', prompt: '', order: order))
-              .copyWith(prompt: prompt.text.trim()),
+              .copyWith(prompt: prompt.text.trim(), pro: pro.value),
         );
         return true;
       },
       fields: [
         _Field(label: 'Reflection prompt', controller: prompt, maxLines: 4),
       ],
+      extras: [_ProToggle(value: pro.value, onChanged: (v) => pro.value = v)],
     );
   }
 }
@@ -490,6 +517,7 @@ class _ScriptsTab extends ConsumerWidget {
           title: s.situation,
           subtitle: '${s.category} · ${s.script}',
           active: s.active,
+          pro: s.pro,
           onToggle: repo == null
               ? null
               : (v) => repo.saveScript(s.copyWith(active: v)),
@@ -525,6 +553,7 @@ class _ScriptSheet extends HookWidget {
     final category = useTextEditingController(text: existing?.category ?? '');
     final script = useTextEditingController(text: existing?.script ?? '');
     final why = useTextEditingController(text: existing?.why ?? '');
+    final pro = useState(existing?.pro ?? false);
     return _SheetScaffold(
       title: existing == null ? 'New script' : 'Edit script',
       onSave: () {
@@ -545,6 +574,7 @@ class _ScriptSheet extends HookWidget {
                 category: category.text.trim(),
                 script: script.text.trim(),
                 why: why.text.trim().isEmpty ? null : why.text.trim(),
+                pro: pro.value,
               ),
         );
         return true;
@@ -555,6 +585,7 @@ class _ScriptSheet extends HookWidget {
         _Field(label: 'What to say', controller: script, maxLines: 3),
         _Field(label: 'Why it works (optional)', controller: why, maxLines: 3),
       ],
+      extras: [_ProToggle(value: pro.value, onChanged: (v) => pro.value = v)],
     );
   }
 }
@@ -572,17 +603,39 @@ class _Field {
   });
 }
 
+/// A "Pro only" switch for the editor sheets — flags content as Pro-gated.
+class _ProToggle extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  const _ProToggle({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return SwitchListTile(
+      contentPadding: EdgeInsets.zero,
+      value: value,
+      onChanged: onChanged,
+      title: const Text('Pro only'),
+      subtitle: const Text('Only Pro users will see this'),
+      secondary: const ProBadge(),
+    );
+  }
+}
+
 /// Bottom-sheet scaffold. [onSave] returns false to signal a validation failure
-/// (keeps the sheet open); true dismisses it.
+/// (keeps the sheet open); true dismisses it. [extras] render below the text
+/// fields (e.g. the Pro-only toggle).
 class _SheetScaffold extends StatelessWidget {
   final String title;
   final List<_Field> fields;
+  final List<Widget> extras;
   final bool Function() onSave;
 
   const _SheetScaffold({
     required this.title,
     required this.fields,
     required this.onSave,
+    this.extras = const [],
   });
 
   @override
@@ -613,6 +666,7 @@ class _SheetScaffold extends StatelessWidget {
               TextField(controller: f.controller, maxLines: f.maxLines),
               const SizedBox(height: 14),
             ],
+            ...extras,
             const SizedBox(height: 4),
             FilledButton(
               onPressed: () {

@@ -14,6 +14,9 @@ mixin CmsItem {
 
   /// Soft on/off switch so the founder can hide an item without deleting it.
   bool get active;
+
+  /// When true, the item is only presented to Pro users. Free by default.
+  bool get pro;
 }
 
 class ParentingTip with CmsItem {
@@ -25,6 +28,8 @@ class ParentingTip with CmsItem {
   final int order;
   @override
   final bool active;
+  @override
+  final bool pro;
 
   const ParentingTip({
     required this.id,
@@ -32,6 +37,7 @@ class ParentingTip with CmsItem {
     this.source,
     this.order = 0,
     this.active = true,
+    this.pro = false,
   });
 
   factory ParentingTip.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -42,6 +48,7 @@ class ParentingTip with CmsItem {
       source: d['source'] as String?,
       order: (d['order'] ?? 0) as int,
       active: (d['active'] ?? true) as bool,
+      pro: (d['pro'] ?? false) as bool,
     );
   }
 
@@ -50,6 +57,7 @@ class ParentingTip with CmsItem {
     'source': source,
     'order': order,
     'active': active,
+    'pro': pro,
   };
 
   ParentingTip copyWith({
@@ -57,12 +65,14 @@ class ParentingTip with CmsItem {
     String? source,
     int? order,
     bool? active,
+    bool? pro,
   }) => ParentingTip(
     id: id,
     text: text ?? this.text,
     source: source ?? this.source,
     order: order ?? this.order,
     active: active ?? this.active,
+    pro: pro ?? this.pro,
   );
 }
 
@@ -75,6 +85,8 @@ class ParentingChallenge with CmsItem {
   final int order;
   @override
   final bool active;
+  @override
+  final bool pro;
 
   const ParentingChallenge({
     required this.id,
@@ -82,6 +94,7 @@ class ParentingChallenge with CmsItem {
     required this.description,
     this.order = 0,
     this.active = true,
+    this.pro = false,
   });
 
   factory ParentingChallenge.fromDoc(
@@ -94,6 +107,7 @@ class ParentingChallenge with CmsItem {
       description: (d['description'] ?? '') as String,
       order: (d['order'] ?? 0) as int,
       active: (d['active'] ?? true) as bool,
+      pro: (d['pro'] ?? false) as bool,
     );
   }
 
@@ -102,6 +116,7 @@ class ParentingChallenge with CmsItem {
     'description': description,
     'order': order,
     'active': active,
+    'pro': pro,
   };
 
   ParentingChallenge copyWith({
@@ -109,12 +124,14 @@ class ParentingChallenge with CmsItem {
     String? description,
     int? order,
     bool? active,
+    bool? pro,
   }) => ParentingChallenge(
     id: id,
     title: title ?? this.title,
     description: description ?? this.description,
     order: order ?? this.order,
     active: active ?? this.active,
+    pro: pro ?? this.pro,
   );
 }
 
@@ -126,12 +143,15 @@ class ReflectionPrompt with CmsItem {
   final int order;
   @override
   final bool active;
+  @override
+  final bool pro;
 
   const ReflectionPrompt({
     required this.id,
     required this.prompt,
     this.order = 0,
     this.active = true,
+    this.pro = false,
   });
 
   factory ReflectionPrompt.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -141,6 +161,7 @@ class ReflectionPrompt with CmsItem {
       prompt: (d['prompt'] ?? '') as String,
       order: (d['order'] ?? 0) as int,
       active: (d['active'] ?? true) as bool,
+      pro: (d['pro'] ?? false) as bool,
     );
   }
 
@@ -148,15 +169,21 @@ class ReflectionPrompt with CmsItem {
     'prompt': prompt,
     'order': order,
     'active': active,
+    'pro': pro,
   };
 
-  ReflectionPrompt copyWith({String? prompt, int? order, bool? active}) =>
-      ReflectionPrompt(
-        id: id,
-        prompt: prompt ?? this.prompt,
-        order: order ?? this.order,
-        active: active ?? this.active,
-      );
+  ReflectionPrompt copyWith({
+    String? prompt,
+    int? order,
+    bool? active,
+    bool? pro,
+  }) => ReflectionPrompt(
+    id: id,
+    prompt: prompt ?? this.prompt,
+    order: order ?? this.order,
+    active: active ?? this.active,
+    pro: pro ?? this.pro,
+  );
 }
 
 /// A ready-to-use phrase parents can say in a charged moment.
@@ -171,6 +198,8 @@ class Script with CmsItem {
   final int order;
   @override
   final bool active;
+  @override
+  final bool pro;
 
   const Script({
     required this.id,
@@ -180,6 +209,7 @@ class Script with CmsItem {
     this.why,
     this.order = 0,
     this.active = true,
+    this.pro = false,
   });
 
   factory Script.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -192,6 +222,7 @@ class Script with CmsItem {
       why: d['why'] as String?,
       order: (d['order'] ?? 0) as int,
       active: (d['active'] ?? true) as bool,
+      pro: (d['pro'] ?? false) as bool,
     );
   }
 
@@ -202,6 +233,7 @@ class Script with CmsItem {
     'why': why,
     'order': order,
     'active': active,
+    'pro': pro,
   };
 
   Script copyWith({
@@ -211,6 +243,7 @@ class Script with CmsItem {
     String? why,
     int? order,
     bool? active,
+    bool? pro,
   }) => Script(
     id: id,
     situation: situation ?? this.situation,
@@ -219,6 +252,7 @@ class Script with CmsItem {
     why: why ?? this.why,
     order: order ?? this.order,
     active: active ?? this.active,
+    pro: pro ?? this.pro,
   );
 }
 

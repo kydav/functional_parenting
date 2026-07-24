@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:functional_parenting/core/presentation/widgets.dart';
 import 'package:functional_parenting/core/providers/pro_provider.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
+import 'package:functional_parenting/features/tools/presentation/worksheets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -49,6 +50,34 @@ class ToolsScreen extends ConsumerWidget {
           ),
 
           const SizedBox(height: 28),
+          Text(
+            'Work the framework',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'A guided worksheet for each phase of the Functional Parenting '
+            'Framework.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: context.colors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          for (final w in kWorksheets) ...[
+            Eyebrow(w.phaseEyebrow),
+            const SizedBox(height: 10),
+            _ProTile(
+              isPro: isPro,
+              icon: w.icon,
+              iconColor: w.iconColor,
+              title: w.title,
+              subtitle: w.subtitle,
+              route: '/tools/worksheet/${w.id}',
+            ),
+            const SizedBox(height: 20),
+          ],
+
+          const SizedBox(height: 8),
           const Eyebrow('Starter Toolkit', color: kSageDeep),
           const SizedBox(height: 10),
           _ProTile(
@@ -76,15 +105,6 @@ class ToolsScreen extends ConsumerWidget {
             title: 'Behavior-function guide',
             subtitle: 'Plain-language reference for the four functions',
             route: '/tools/guide',
-          ),
-          const SizedBox(height: 12),
-          _ProTile(
-            isPro: isPro,
-            icon: Icons.self_improvement_rounded,
-            iconColor: kWarmAmber,
-            title: 'Parent reset audio',
-            subtitle: 'Guided audio to regulate on the go',
-            route: null, // not built yet — sends to the toolkit
           ),
         ],
       ),

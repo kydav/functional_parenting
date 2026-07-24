@@ -13,16 +13,6 @@ import 'package:url_launcher/url_launcher.dart';
 class WorkshopsScreen extends ConsumerWidget {
   const WorkshopsScreen({super.key});
 
-  Future<void> _openCall(BuildContext context) async {
-    // Placeholder — wire to the founder's real booking link (Calendly, etc.).
-    final ok = await launchUrl(Uri.parse('https://calendly.com'));
-    if (!ok && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Booking link coming soon.')),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final workshopsAsync = ref.watch(workshopsProvider);
@@ -57,7 +47,7 @@ class WorkshopsScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  "Book a free discovery call and we'll talk through what's happening at home and whether coaching is a fit.",
+                  "Book a free behavior pattern assessment and we'll talk through what's happening at home and whether coaching is a fit.",
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.75),
                     height: 1.5,
@@ -70,7 +60,11 @@ class WorkshopsScreen extends ConsumerWidget {
                     backgroundColor: kBlue,
                     foregroundColor: kNavy,
                   ),
-                  onPressed: () => _openCall(context),
+                  onPressed: () => launchUrl(
+                    Uri.parse(
+                      'https://pages.taylorthomascoaching.com/calendar',
+                    ),
+                  ),
                   icon: const Icon(Icons.calendar_month_rounded, size: 18),
                   label: const Text('Book a free call'),
                 ),
@@ -265,9 +259,10 @@ class _WorkshopCard extends HookConsumerWidget {
               children: [
                 if (workshop.joinLink.isNotEmpty)
                   Expanded(
-                    child: OutlinedButton(
+                    child: FilledButton.icon(
                       onPressed: openRegistration,
-                      child: const Text('Register'),
+                      icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                      label: const Text('Register'),
                     ),
                   ),
                 if (workshop.joinLink.isNotEmpty) const SizedBox(width: 10),

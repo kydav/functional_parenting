@@ -79,11 +79,10 @@ class ActionPlansScreen extends ConsumerWidget {
                           ],
                         ),
                       ),
-                      if (p.reviewDate != null)
-                        Text(
-                          'Review ${DateFormat('MMM d').format(p.reviewDate!)}',
-                          style: Theme.of(context).textTheme.labelSmall,
-                        ),
+                      Text(
+                        DateFormat('MMM d').format(p.createdAt),
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
                     ],
                   ),
                 ),

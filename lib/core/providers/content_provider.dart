@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:functional_parenting/core/models/content.dart';
+import 'package:functional_parenting/core/providers/pro_provider.dart';
 import 'package:functional_parenting/core/services/content_repository.dart';
 
 /// ── Seed content ────────────────────────────────────────────────────────────
@@ -223,27 +224,48 @@ final scriptsStreamProvider = StreamProvider<List<Script>>((ref) {
 });
 
 /// ── Resolved, app-facing lists ───────────────────────────────────────────────
-/// Active items only, with a synchronous fallback to the seed so the app is
-/// never blank (during load, offline, before seeding, or in demo mode).
+/// Active items the current user is allowed to see, with a synchronous fallback
+/// to the seed so the app is never blank (during load, offline, before seeding,
+/// or in demo mode). Pro-only items are hidden from non-Pro users.
 
-List<T> _resolve<T extends CmsItem>(AsyncValue<List<T>> async, List<T> seed) {
+List<T> _resolve<T extends CmsItem>(
+  AsyncValue<List<T>> async,
+  List<T> seed, {
+  required bool isPro,
+}) {
   final live = async.value;
-  if (live == null || live.isEmpty) return seed;
-  final active = live.where((e) => e.active).toList();
-  return active.isEmpty ? seed : active;
+  final source = (live == null || live.isEmpty) ? seed : live;
+  final visible = source.where((e) => e.active && (isPro || !e.pro)).toList();
+  return visible.isEmpty ? seed : visible;
 }
 
 final tipsProvider = Provider<List<ParentingTip>>(
-  (ref) => _resolve(ref.watch(tipsStreamProvider), kSeedTips),
+  (ref) => _resolve(
+    ref.watch(tipsStreamProvider),
+    kSeedTips,
+    isPro: ref.watch(proProvider),
+  ),
 );
 final challengesProvider = Provider<List<ParentingChallenge>>(
-  (ref) => _resolve(ref.watch(challengesStreamProvider), kSeedChallenges),
+  (ref) => _resolve(
+    ref.watch(challengesStreamProvider),
+    kSeedChallenges,
+    isPro: ref.watch(proProvider),
+  ),
 );
 final reflectionsProvider = Provider<List<ReflectionPrompt>>(
-  (ref) => _resolve(ref.watch(reflectionsStreamProvider), kSeedReflections),
+  (ref) => _resolve(
+    ref.watch(reflectionsStreamProvider),
+    kSeedReflections,
+    isPro: ref.watch(proProvider),
+  ),
 );
 final scriptsProvider = Provider<List<Script>>(
-  (ref) => _resolve(ref.watch(scriptsStreamProvider), kSeedScripts),
+  (ref) => _resolve(
+    ref.watch(scriptsStreamProvider),
+    kSeedScripts,
+    isPro: ref.watch(proProvider),
+  ),
 );
 
 /// ── Daily selection (deterministic per day) ──────────────────────────────────

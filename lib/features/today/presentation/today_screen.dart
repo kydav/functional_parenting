@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:functional_parenting/core/presentation/free_guide_card.dart';
 import 'package:functional_parenting/core/presentation/widgets.dart';
 import 'package:functional_parenting/core/providers/auth_provider.dart';
 import 'package:functional_parenting/core/providers/content_provider.dart';
@@ -114,6 +115,11 @@ class TodayScreen extends HookConsumerWidget {
             ),
           ),
           const SizedBox(height: 20),
+
+          if (!ref.watch(freeGuideDismissedProvider)) ...const [
+            FreeGuideCard(),
+            SizedBox(height: 20),
+          ],
 
           const Eyebrow("Today's tip", icon: Icons.lightbulb_outline),
           const SizedBox(height: 8),
