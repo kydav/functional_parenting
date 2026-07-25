@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:functional_parenting/core/constants.dart';
 import 'package:functional_parenting/core/models/workshop.dart';
 import 'package:functional_parenting/core/presentation/widgets.dart';
 import 'package:functional_parenting/core/providers/auth_provider.dart';
@@ -40,14 +41,14 @@ class WorkshopsScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'Not sure where to start?',
+                  'Not sure where to start or what the next steps are?',
                   style: Theme.of(
                     context,
                   ).textTheme.titleLarge?.copyWith(color: Colors.white),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  "Book a free behavior pattern assessment and we'll talk through what's happening at home and whether coaching is a fit.",
+                  "Book a free behavior pattern assessment and we'll talk through what's happening, why, and what you can do about it.",
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.75),
                     height: 1.5,
@@ -60,11 +61,7 @@ class WorkshopsScreen extends ConsumerWidget {
                     backgroundColor: kBlue,
                     foregroundColor: kNavy,
                   ),
-                  onPressed: () => launchUrl(
-                    Uri.parse(
-                      'https://pages.taylorthomascoaching.com/calendar',
-                    ),
-                  ),
+                  onPressed: () => launchUrl(Uri.parse(kBookACallUrl)),
                   icon: const Icon(Icons.calendar_month_rounded, size: 18),
                   label: const Text('Book a free call'),
                 ),

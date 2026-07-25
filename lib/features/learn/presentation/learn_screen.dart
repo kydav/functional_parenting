@@ -3,6 +3,7 @@ import 'package:functional_parenting/core/presentation/widgets.dart';
 import 'package:functional_parenting/core/providers/pro_provider.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:functional_parenting/features/learn/presentation/learn_content.dart';
+import 'package:functional_parenting/features/tools/presentation/worksheets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -107,6 +108,26 @@ class LearnScreen extends ConsumerWidget {
   }
 }
 
+/// The tool tied to a framework phase: phases 1–4 map to their worksheet;
+/// phase 5 (Respond With Purpose) sends the parent to build a Parenting Plan.
+({String route, String label, IconData icon}) _associatedTool(
+  LearnPhase phase,
+) {
+  if (phase.number >= 1 && phase.number <= kWorksheets.length) {
+    final w = kWorksheets[phase.number - 1];
+    return (
+      route: '/tools/worksheet/${w.id}',
+      label: 'Open the ${w.title}',
+      icon: w.icon,
+    );
+  }
+  return (
+    route: '/tools/plans',
+    label: 'Build a Parenting Plan',
+    icon: Icons.description_outlined,
+  );
+}
+
 class _PhaseCard extends StatelessWidget {
   final LearnPhase phase;
   final bool isPro;
@@ -117,11 +138,25 @@ class _PhaseCard extends StatelessWidget {
     return SoftCard(
       onTap: () {
         if (isPro) {
+          final tool = _associatedTool(phase);
           showLearnSheet(
             context,
             eyebrow: 'Phase ${phase.number}',
             title: phase.title,
             content: phase.content,
+            footer: Builder(
+              builder: (sheetContext) => SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () {
+                    Navigator.of(sheetContext).pop();
+                    sheetContext.push(tool.route);
+                  },
+                  icon: Icon(tool.icon, size: 18),
+                  label: Text(tool.label),
+                ),
+              ),
+            ),
           );
         } else {
           context.push('/paywall');

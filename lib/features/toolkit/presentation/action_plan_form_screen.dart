@@ -42,6 +42,50 @@ class ActionPlanFormScreen extends HookConsumerWidget {
       response.text = existing.response;
     }
 
+    // Latest answers from the four framework worksheets, so a new plan can be
+    // seeded from work the parent has already done. Each worksheet's key answer
+    // maps onto the matching plan phase.
+    Map<String, String> ws(String id) =>
+        ref.watch(worksheetResponseProvider(id)).value?.answers ?? const {};
+    final wsTrigger = ws('parent_trigger_map'); // Phase 1
+    final wsGoal = ws('parenting_goal_clarifier'); // Phase 2
+    final wsDecoder = ws('behavior_decoder'); // Phase 3
+    final wsStructure = ws('structure_builder'); // Phase 4
+
+    String firstNonEmpty(Iterable<String> vals) =>
+        vals.firstWhere((v) => v.trim().isNotEmpty, orElse: () => '');
+    final seedTitle = firstNonEmpty([
+      wsGoal['behavior'] ?? '',
+      wsDecoder['behavior'] ?? '',
+    ]);
+    final seeds = <String, String>{
+      'title': seedTitle,
+      'reset': wsTrigger['practice'] ?? '',
+      'goal': wsGoal['goal'] ?? '',
+      'function': wsDecoder['function'] ?? '',
+      'structure': wsStructure['structure'] ?? '',
+      'response': wsDecoder['response'] ?? '',
+    };
+    final hasSeed = seeds.values.any((v) => v.trim().isNotEmpty);
+
+    void prefillFromWorksheets() {
+      void set(TextEditingController c, String v) {
+        if (v.trim().isNotEmpty) c.text = v.trim();
+      }
+
+      set(title, seeds['title']!);
+      set(resetPlan, seeds['reset']!);
+      set(goal, seeds['goal']!);
+      if (seeds['function']!.trim().isNotEmpty) {
+        function.value = seeds['function']!.trim();
+      }
+      set(structure, seeds['structure']!);
+      set(response, seeds['response']!);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Filled in from your worksheet answers.')),
+      );
+    }
+
     Future<void> save() async {
       if (title.text.trim().isEmpty) return;
       final plan = ActionPlan(
@@ -76,6 +120,40 @@ class ActionPlanFormScreen extends HookConsumerWidget {
               height: 1.5,
             ),
           ),
+          if (!isEditing && hasSeed) ...[
+            const SizedBox(height: 16),
+            SoftCard(
+              color: kSage.withValues(alpha: 0.35),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Eyebrow(
+                    'From the framework',
+                    icon: Icons.auto_awesome_outlined,
+                    color: kSageDeep,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'You’ve already answered some framework worksheets. Pull '
+                    'those answers in to get a head start — you can edit '
+                    'anything before saving.',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(height: 1.5),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: prefillFromWorksheets,
+                      icon: const Icon(Icons.download_done_rounded, size: 18),
+                      label: const Text('Use my worksheet answers'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 20),
           _Field(
             label: 'The behavior you’re working on',

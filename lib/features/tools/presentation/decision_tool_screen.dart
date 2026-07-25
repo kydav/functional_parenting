@@ -2,162 +2,34 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:functional_parenting/core/presentation/widgets.dart';
 import 'package:functional_parenting/core/providers/pro_provider.dart';
+import 'package:functional_parenting/core/providers/toolkit_provider.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
+import 'package:functional_parenting/features/tools/presentation/decide_content.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-/// A small, self-contained decision flow. The free tree gives one solid place
-/// to start for each function; Pro unlocks a deeper follow-up branch with more
-/// specific next steps (any leaf whose `more` is set).
+/// "What should I do?" — a calm, guided walkthrough. Everyone can reach the
+/// "why" behind a behavior for free; the detailed in-the-moment response (do
+/// this now / try saying / avoid / after everyone is calm) is part of the
+/// toolkit. Any result can be saved or handed off to a free assessment call.
 class DecisionToolScreen extends HookConsumerWidget {
-  const DecisionToolScreen({super.key});
+  const DecisionToolScreen({super.key, this.initialLeafId});
 
-  static const _root = _Step(
-    question: 'Is anyone unsafe right now?',
-    options: [
-      _Opt('Yes — someone could get hurt', _safety),
-      _Opt('No, everyone is safe', _function),
-    ],
-  );
-
-  static const _safety = _Step(
-    guidance:
-        'Safety first. Calmly stop the unsafe action and move bodies apart if needed. '
-        'Stay close and quiet — narrate less, regulate more. Once everyone is safe and '
-        'calmer, come back to the "why" behind the behavior.',
-  );
-
-  static const _function = _Step(
-    question: 'What does the behavior seem to be reaching for?',
-    options: [
-      _Opt('Attention / connection', _attention),
-      _Opt('To avoid or escape something', _escape),
-      _Opt('A tangible — a thing or activity', _tangible),
-      _Opt("They're dysregulated / overwhelmed", _regulate),
-    ],
-  );
-
-  // ── Attention ─────────────────────────────────────────────────────────────
-  static const _attention = _Step(
-    guidance:
-        'This behavior is asking to be seen. Give calm, low-drama attention for the behavior '
-        "you want, and keep your reaction small for the behavior you don't. Front-load "
-        'connection today so the tank is fuller before the next ask.',
-    more: _attentionMore,
-  );
-  static const _attentionMore = _Step(
-    question: 'What tends to happen in the moment?',
-    options: [
-      _Opt('I stop and give in to keep the peace', _attentionGiveIn),
-      _Opt('I repeat myself / it escalates', _attentionEscalate),
-    ],
-  );
-  static const _attentionGiveIn = _Step(
-    guidance:
-        'If big behavior reliably earns your attention, it becomes the tool that works. '
-        'Flip it: give brief, warm attention the moment they do the calm version ("I love how '
-        'you asked me"), and keep your response to the loud version small and boring. Then '
-        'schedule connection you initiate — 10 device-free minutes at a predictable time — so '
-        "attention isn't something they have to fight for.",
-  );
-  static const _attentionEscalate = _Step(
-    guidance:
-        'Repeating and reacting is still attention, and it fuels the loop. Say it once, calmly, '
-        'then let your face and body go neutral. Catch the first flicker of the behavior you '
-        'want and pour warmth in there instead. The contrast — big for calm, small for chaos — '
-        'is what teaches the shift.',
-  );
-
-  // ── Escape / avoidance ──────────────────────────────────────────────────
-  static const _escape = _Step(
-    guidance:
-        'The demand may feel too big. Break it into a smaller first step, offer a bounded choice, '
-        'and acknowledge the hard feeling ("this feels like a lot"). Follow through calmly so words '
-        'stay reliable.',
-    more: _escapeMore,
-  );
-  static const _escapeMore = _Step(
-    question: 'Does this task truly have to happen right now?',
-    options: [
-      _Opt('Yes — it has to happen', _escapeMust),
-      _Opt('It could wait or be adjusted', _escapeFlex),
-    ],
-  );
-  static const _escapeMust = _Step(
-    guidance:
-        'Make the mountain a step. Name the very first tiny action ("just shoes on"), then a '
-        'when-then for what follows ("when shoes are on, then we head out"). Offer control inside '
-        'the task, not over whether it happens ("red socks or blue?"). Stay warm and boring, and '
-        'let the follow-through — not more words — carry it.',
-  );
-  static const _escapeFlex = _Step(
-    guidance:
-        "If there's room, lower the demand instead of the boom. Shorten it, do the first bit "
-        'together, or delay with a clear plan ("we\'ll do it after snack"). Handing back a little '
-        'control now prevents the power struggle — and keeps the task from becoming a battle line.',
-  );
-
-  // ── Tangible ─────────────────────────────────────────────────────────────
-  static const _tangible = _Step(
-    guidance:
-        'They want the thing. Name it and set the limit clearly ("you want it — and it\'s not for '
-        'right now"). Offer when/then ("when shoes are on, then we go"). Avoid negotiating the limit '
-        "once it's set.",
-    more: _tangibleMore,
-  );
-  static const _tangibleMore = _Step(
-    question: 'Is something ending, or is this a brand-new want?',
-    options: [
-      _Opt("They had it and it's ending", _tangibleEnding),
-      _Opt("It's a new demand", _tangibleNew),
-    ],
-  );
-  static const _tangibleEnding = _Step(
-    guidance:
-        'Transitions off a good thing are hard. Warn before you switch ("two more minutes, then '
-        'we\'re all done"), make the ending concrete with a timer or a last turn, and name what\'s '
-        "next so there's somewhere to go. Expect the protest and stay steady — the limit holds "
-        'even while you hold the feeling.',
-  );
-  static const _tangibleNew = _Step(
-    guidance:
-        'A new demand is a chance to teach asking and waiting. Show the words ("Can I have a turn, '
-        'please?"), then a short, doable wait ("after we finish here"). Reward the calm ask and the '
-        'wait — not the escalation — so the polite path becomes the one that works.',
-  );
-
-  // ── Regulation ───────────────────────────────────────────────────────────
-  static const _regulate = _Step(
-    guidance:
-        "A flooded child can't problem-solve. Co-regulate first: lower your voice, get to their level, "
-        'and ride the wave with them. Save the teaching for after the storm passes.',
-    more: _regulateMore,
-  );
-  static const _regulateMore = _Step(
-    question: 'Right now, are they still ramping up or starting to settle?',
-    options: [
-      _Opt('Still escalating', _regulateEscalating),
-      _Opt('Starting to come down', _regulateSettling),
-    ],
-  );
-  static const _regulateEscalating = _Step(
-    guidance:
-        'At peak flood, less is more. Cut the words, dim the input (noise, lights, audience), and '
-        'keep everyone safe. Offer your calm presence, not a lesson — a steady hand, a low voice, '
-        "space if they need it. You are the anchor; you don't have to fix it, just outlast the wave.",
-  );
-  static const _regulateSettling = _Step(
-    guidance:
-        'As they come down, reconnect before you correct. Name the feeling ("that was really hard"), '
-        'offer a bridge back (water, a hug, a quiet job to do together), and keep repair light. Save '
-        "any problem-solving for later, when they're fully regulated and can actually take it in.",
-  );
+  /// When set (e.g. re-opening a saved recommendation), the tool starts on that
+  /// result instead of the first question.
+  final String? initialLeafId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isPro = ref.watch(proProvider);
-    final path = useState<List<_Step>>([_root]);
+
+    final path = useState<List<DecideStep>>(_initialPath(initialLeafId));
     final current = path.value.last;
+    final atRoot = identical(current, kDecideRoot);
+
+    void go(DecideStep next) => path.value = [...path.value, next];
+    void back() => path.value = [...path.value]..removeLast();
+    void restart() => path.value = [kDecideRoot];
 
     return Scaffold(
       appBar: AppBar(
@@ -165,7 +37,7 @@ class DecisionToolScreen extends HookConsumerWidget {
         leading: path.value.length > 1
             ? IconButton(
                 icon: const Icon(Icons.arrow_back_rounded),
-                onPressed: () => path.value = [...path.value]..removeLast(),
+                onPressed: back,
               )
             : null,
       ),
@@ -176,61 +48,25 @@ class DecisionToolScreen extends HookConsumerWidget {
           children: [
             _StepDots(count: path.value.length),
             const SizedBox(height: 20),
-            if (current.isLeaf) ...[
-              SoftCard(
-                color: kSage.withValues(alpha: 0.35),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Eyebrow(
-                      'A place to start',
-                      icon: Icons.tips_and_updates_outlined,
-                      color: kSageDeep,
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      current.guidance!,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodyLarge?.copyWith(height: 1.6),
-                    ),
-                  ],
-                ),
-              ),
-              if (current.more != null) ...[
-                const SizedBox(height: 16),
-                if (isPro)
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      onPressed: () =>
-                          path.value = [...path.value, current.more!],
-                      icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-                      label: const Text('More specific next steps'),
-                    ),
-                  )
-                else
-                  _ProUpsell(onUnlock: () => context.push('/paywall')),
-              ],
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () => path.value = [_root],
-                  child: const Text('Start over'),
-                ),
-              ),
-            ] else ...[
+            if (current.isLeaf)
+              _Result(
+                leaf: current.leaf!,
+                isPro: isPro,
+                onExpertFeedback: () => context.push('/tools/expert-feedback'),
+                onUnlock: () => context.push('/paywall'),
+                onRestart: restart,
+              )
+            else ...[
               Text(
                 current.question!,
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 16),
-              ...current.options.map(
-                (o) => Padding(
+              for (final o in current.options)
+                Padding(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: SoftCard(
-                    onTap: () => path.value = [...path.value, o.next],
+                    onTap: () => go(o.next),
                     child: Row(
                       children: [
                         Expanded(
@@ -247,7 +83,7 @@ class DecisionToolScreen extends HookConsumerWidget {
                     ),
                   ),
                 ),
-              ),
+              if (atRoot) ...[const SizedBox(height: 12), const _Disclaimer()],
             ],
           ],
         ),
@@ -256,7 +92,305 @@ class DecisionToolScreen extends HookConsumerWidget {
   }
 }
 
-/// Shown at a free stopping point that has deeper Pro guidance available.
+List<DecideStep> _initialPath(String? leafId) {
+  if (leafId != null) {
+    final leaf = decideLeafById(leafId);
+    if (leaf != null) return [DecideStep(leaf: leaf)];
+  }
+  return [kDecideRoot];
+}
+
+/// A result screen: free "why", Pro-gated action steps, and the follow-up
+/// actions (save, expert feedback, start over).
+class _Result extends ConsumerWidget {
+  final DecideLeaf leaf;
+  final bool isPro;
+  final VoidCallback onExpertFeedback;
+  final VoidCallback onUnlock;
+  final VoidCallback onRestart;
+  const _Result({
+    required this.leaf,
+    required this.isPro,
+    required this.onExpertFeedback,
+    required this.onUnlock,
+    required this.onRestart,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final saved = ref
+        .watch(savedRecommendationsProvider)
+        .maybeWhen(
+          data: (list) => list.any((r) => r.leafId == leaf.id),
+          orElse: () => false,
+        );
+
+    Future<void> toggleSave() async {
+      final repo = ref.read(toolkitRepositoryProvider);
+      final messenger = ScaffoldMessenger.of(context);
+      if (saved) {
+        await repo.deleteRecommendation(leaf.id);
+        messenger.showSnackBar(const SnackBar(content: Text('Removed.')));
+      } else {
+        await repo.saveRecommendation(
+          leafId: leaf.id,
+          category: leaf.category,
+          title: leaf.title,
+        );
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Saved to your recommendations.')),
+        );
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(leaf.category.toUpperCase(), style: _eyebrowStyle),
+        const SizedBox(height: 4),
+        Text(leaf.title, style: Theme.of(context).textTheme.headlineSmall),
+        const SizedBox(height: 16),
+
+        // ── Free: a short orientation and/or the "why" ──────────────────
+        if (leaf.note != null)
+          _StartCard(leaf.note!)
+        else if (leaf.whatsHappening != null)
+          _Section(
+            label: 'What may be happening',
+            icon: Icons.lightbulb_outline_rounded,
+            color: kBlueDeep,
+            text: leaf.whatsHappening!,
+          ),
+
+        // ── Pro: the in-the-moment response ─────────────────────────────
+        if (leaf.hasProContent) ...[
+          const SizedBox(height: 16),
+          if (isPro)
+            _ProResponse(leaf: leaf)
+          else
+            _ProUpsell(onUnlock: onUnlock),
+        ],
+
+        const SizedBox(height: 24),
+
+        // ── Follow-up actions ───────────────────────────────────────────
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: toggleSave,
+            icon: Icon(
+              saved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+              size: 18,
+            ),
+            label: Text(saved ? 'Saved' : 'Save this recommendation'),
+          ),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: onExpertFeedback,
+            icon: const Icon(Icons.phone_in_talk_outlined, size: 18),
+            label: const Text('Get expert feedback'),
+          ),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          width: double.infinity,
+          child: TextButton(
+            onPressed: onRestart,
+            child: const Text('Start over'),
+          ),
+        ),
+        const SizedBox(height: 96),
+      ],
+    );
+  }
+}
+
+/// The Pro "in the moment" block: do-now, scripts, avoid, after-calm.
+class _ProResponse extends StatelessWidget {
+  final DecideLeaf leaf;
+  const _ProResponse({required this.leaf});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (leaf.doNow != null)
+          SoftCard(
+            color: kSage.withValues(alpha: 0.35),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Eyebrow(
+                  'Do this now',
+                  icon: Icons.bolt_rounded,
+                  color: kSageDeep,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  leaf.doNow!,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge?.copyWith(height: 1.6),
+                ),
+              ],
+            ),
+          ),
+        if (leaf.trySaying.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          const Eyebrow('Try saying', icon: Icons.format_quote_rounded),
+          const SizedBox(height: 8),
+          for (final phrase in leaf.trySaying)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: context.colors.surface,
+                    border: Border.all(color: context.colors.border),
+                  ),
+                  child: IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Container(width: 3, color: kBlueDeep),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.all(14),
+                            child: Text(
+                              phrase,
+                              style: Theme.of(context).textTheme.bodyLarge
+                                  ?.copyWith(
+                                    height: 1.5,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+        if (leaf.avoid != null) ...[
+          const SizedBox(height: 8),
+          _Section(
+            label: 'Avoid',
+            icon: Icons.do_not_disturb_on_outlined,
+            color: kWarmAmber,
+            text: leaf.avoid!,
+          ),
+        ],
+        if (leaf.afterCalm != null) ...[
+          const SizedBox(height: 16),
+          _Section(
+            label: 'After everyone is calm',
+            icon: Icons.spa_outlined,
+            color: kSuccessGreen,
+            text: leaf.afterCalm!,
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// A labeled paragraph section with a colored eyebrow.
+class _Section extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color color;
+  final String text;
+  const _Section({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.text,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Eyebrow(label, icon: icon, color: color),
+        const SizedBox(height: 6),
+        Text(
+          text,
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.6),
+        ),
+      ],
+    );
+  }
+}
+
+/// The free single-paragraph "place to start" (used by "I'm not sure" answers).
+class _StartCard extends StatelessWidget {
+  final String text;
+  const _StartCard(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return SoftCard(
+      color: kSage.withValues(alpha: 0.35),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Eyebrow(
+            'A place to start',
+            icon: Icons.tips_and_updates_outlined,
+            color: kSageDeep,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            text,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.6),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Legal/safety disclaimer shown under the first question.
+class _Disclaimer extends StatelessWidget {
+  const _Disclaimer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          Icons.info_outline_rounded,
+          size: 15,
+          color: context.colors.textSecondary,
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            'This tool provides general educational guidance and is not medical '
+            'advice. Seek individualized professional support for repeated '
+            'aggression, self-injury, elopement, significant developmental '
+            'concerns, or other safety risks.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: context.colors.textSecondary,
+              height: 1.5,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Shown to free users in place of the detailed response.
 class _ProUpsell extends StatelessWidget {
   final VoidCallback onUnlock;
   const _ProUpsell({required this.onUnlock});
@@ -274,7 +408,7 @@ class _ProUpsell extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  "There's a more specific next step for this",
+                  'See the full in-the-moment response',
                   style: Theme.of(
                     context,
                   ).textTheme.titleMedium?.copyWith(color: Colors.white),
@@ -284,8 +418,9 @@ class _ProUpsell extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'The Starter Toolkit unlocks a deeper follow-up for each situation — '
-            "tailored to what's actually happening in the moment.",
+            'The Toolkit unlocks the step-by-step response for each situation — '
+            'what to do now, exact words to try, what to avoid, and how to '
+            'follow up once everyone is calm.',
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.8),
               height: 1.5,
@@ -333,25 +468,9 @@ class _StepDots extends StatelessWidget {
   }
 }
 
-class _Step {
-  final String? question;
-  final String? guidance;
-  final List<_Opt> options;
-
-  /// A deeper follow-up reachable only by Pro users. When set on a leaf, free
-  /// users see an upsell in its place.
-  final _Step? more;
-  const _Step({
-    this.question,
-    this.guidance,
-    this.options = const [],
-    this.more,
-  });
-  bool get isLeaf => options.isEmpty;
-}
-
-class _Opt {
-  final String label;
-  final _Step next;
-  const _Opt(this.label, this.next);
-}
+const _eyebrowStyle = TextStyle(
+  color: kBlueDeep,
+  fontSize: 11,
+  fontWeight: FontWeight.w600,
+  letterSpacing: 1.1,
+);

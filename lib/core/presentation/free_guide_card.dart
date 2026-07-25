@@ -108,7 +108,7 @@ class FreeGuideCard extends ConsumerWidget {
           Row(
             children: [
               const Eyebrow(
-                'Free guide from Taylor',
+                'Free guide',
                 icon: Icons.card_giftcard_rounded,
                 color: kSageDeep,
               ),
@@ -137,7 +137,7 @@ class FreeGuideCard extends ConsumerWidget {
           const SizedBox(height: 6),
           Text(
             'A short daily framework to understand why the behavior keeps '
-            'happening — and respond before things escalate.',
+            'happening — and how to respond before things escalate.',
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(height: 1.5),

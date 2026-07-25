@@ -92,7 +92,7 @@ class _LogCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  log.behavior,
+                  log.behavior.isEmpty ? 'Behavior' : log.behavior.join(', '),
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
               ),
@@ -108,7 +108,11 @@ class _LogCard extends StatelessWidget {
           ],
           if (log.antecedent.isNotEmpty || log.consequence.isNotEmpty) ...[
             const SizedBox(height: 8),
-            _AbcRow(a: log.antecedent, b: log.behavior, c: log.consequence),
+            _AbcRow(
+              a: log.antecedent.join(', '),
+              b: log.behavior.join(', '),
+              c: log.consequence.join(', '),
+            ),
           ],
         ],
       ),

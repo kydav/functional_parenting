@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:functional_parenting/core/models/action_plan.dart';
 import 'package:functional_parenting/core/models/behavior_log.dart';
+import 'package:functional_parenting/core/models/saved_recommendation.dart';
 import 'package:functional_parenting/core/models/worksheet_response.dart';
 import 'package:functional_parenting/core/providers/auth_provider.dart';
 import 'package:functional_parenting/core/services/toolkit_repository.dart';
@@ -24,3 +25,8 @@ final worksheetResponseProvider =
     StreamProvider.family<WorksheetResponse, String>(
       (ref, id) => ref.watch(toolkitRepositoryProvider).watchWorksheet(id),
     );
+
+/// Recommendations the parent saved from the "What should I do?" tool.
+final savedRecommendationsProvider = StreamProvider<List<SavedRecommendation>>(
+  (ref) => ref.watch(toolkitRepositoryProvider).watchSavedRecommendations(),
+);

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:functional_parenting/core/models/action_plan.dart';
 import 'package:functional_parenting/core/models/behavior_log.dart';
+import 'package:functional_parenting/core/models/saved_recommendation.dart';
 import 'package:functional_parenting/core/models/worksheet_response.dart';
 
 /// Private per-user store for the Pro toolkit (ABC behavior logs + action
@@ -18,6 +19,8 @@ class ToolkitRepository {
       _db.collection('users').doc(_uid).collection('actionPlans');
   CollectionReference<Map<String, dynamic>> get _worksheets =>
       _db.collection('users').doc(_uid).collection('worksheets');
+  CollectionReference<Map<String, dynamic>> get _savedRecs =>
+      _db.collection('users').doc(_uid).collection('savedRecommendations');
 
   // ── Behavior logs ────────────────────────────────────────────────────────
 
@@ -70,4 +73,27 @@ class ToolkitRepository {
             WorksheetResponse(id: id, answers: answers).toMap(),
             SetOptions(merge: true),
           );
+
+  // ── Saved recommendations ("What should I do?") ──────────────────────────
+  // One doc per saved leaf, keyed by the leaf id so re-saving is idempotent and
+  // "is this saved?" is a cheap doc lookup.
+
+  Stream<List<SavedRecommendation>> watchSavedRecommendations() => _savedRecs
+      .orderBy('savedAt', descending: true)
+      .snapshots()
+      .map((s) => s.docs.map(SavedRecommendation.fromDoc).toList());
+
+  Future<void> saveRecommendation({
+    required String leafId,
+    required String category,
+    required String title,
+  }) => _savedRecs.doc(leafId).set({
+    'leafId': leafId,
+    'category': category,
+    'title': title,
+    'savedAt': Timestamp.fromDate(DateTime.now()),
+  });
+
+  Future<void> deleteRecommendation(String leafId) =>
+      _savedRecs.doc(leafId).delete();
 }

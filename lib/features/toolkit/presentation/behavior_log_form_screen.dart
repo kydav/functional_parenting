@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:functional_parenting/core/models/behavior_log.dart';
 import 'package:functional_parenting/core/providers/toolkit_provider.dart';
+import 'package:functional_parenting/core/theme/app_theme.dart';
+import 'package:functional_parenting/features/toolkit/presentation/behavior_log_options.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -23,29 +25,26 @@ class BehaviorLogFormScreen extends HookConsumerWidget {
     final occurredAt = useState<DateTime>(
       existing?.occurredAt ?? DateTime.now(),
     );
-    final setting = useTextEditingController(text: existing?.setting ?? '');
-    final antecedent = useTextEditingController(
-      text: existing?.antecedent ?? '',
-    );
-    final behavior = useTextEditingController(text: existing?.behavior ?? '');
-    final consequence = useTextEditingController(
-      text: existing?.consequence ?? '',
-    );
-    final trigger = useTextEditingController(text: existing?.trigger ?? '');
-    final response = useTextEditingController(text: existing?.response ?? '');
-    final outcome = useTextEditingController(text: existing?.outcome ?? '');
+    final setting = useState<String?>(existing?.setting.emptyToNull);
+    final antecedent = useState<Set<String>>({...?existing?.antecedent});
+    final behavior = useState<Set<String>>({...?existing?.behavior});
+    final consequence = useState<Set<String>>({...?existing?.consequence});
+    final trigger = useState<Set<String>>({...?existing?.trigger});
+    final response = useState<Set<String>>({...?existing?.response});
+    final outcome = useState<String?>(existing?.outcome.emptyToNull);
     final loaded = useRef(false);
 
+    // The edit target streams in async — hydrate the fields once it arrives.
     if (isEditing && existing != null && !loaded.value) {
       loaded.value = true;
       occurredAt.value = existing.occurredAt;
-      setting.text = existing.setting;
-      antecedent.text = existing.antecedent;
-      behavior.text = existing.behavior;
-      consequence.text = existing.consequence;
-      trigger.text = existing.trigger;
-      response.text = existing.response;
-      outcome.text = existing.outcome;
+      setting.value = existing.setting.emptyToNull;
+      antecedent.value = {...existing.antecedent};
+      behavior.value = {...existing.behavior};
+      consequence.value = {...existing.consequence};
+      trigger.value = {...existing.trigger};
+      response.value = {...existing.response};
+      outcome.value = existing.outcome.emptyToNull;
     }
 
     Future<void> pickWhen() async {
@@ -70,18 +69,20 @@ class BehaviorLogFormScreen extends HookConsumerWidget {
       );
     }
 
+    final canSave = behavior.value.isNotEmpty;
+
     Future<void> save() async {
-      if (behavior.text.trim().isEmpty) return;
+      if (!canSave) return;
       final log = BehaviorLog(
         id: logId ?? '',
         occurredAt: occurredAt.value,
-        behavior: behavior.text.trim(),
-        setting: setting.text.trim(),
-        antecedent: antecedent.text.trim(),
-        consequence: consequence.text.trim(),
-        trigger: trigger.text.trim(),
-        response: response.text.trim(),
-        outcome: outcome.text.trim(),
+        behavior: behavior.value.toList(),
+        setting: setting.value ?? '',
+        antecedent: antecedent.value.toList(),
+        consequence: consequence.value.toList(),
+        trigger: trigger.value.toList(),
+        response: response.value.toList(),
+        outcome: outcome.value ?? '',
       );
       await ref.read(toolkitRepositoryProvider).saveLog(log);
       if (context.mounted) context.pop();
@@ -106,45 +107,81 @@ class BehaviorLogFormScreen extends HookConsumerWidget {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
         children: [
           _WhenField(value: occurredAt.value, onTap: pickWhen),
-          const SizedBox(height: 14),
-          _Field(
+          const SizedBox(height: 20),
+          _SingleSelect(
             label: 'Setting',
-            controller: setting,
-            hint: 'Where were you? e.g. home, dinner table',
+            hint: 'Where did it happen?',
+            options: kSettingOptions,
+            value: setting.value,
+            onChanged: (v) => setting.value = v,
           ),
-          _Field(
-            label: 'Antecedent — what happened just before',
-            controller: antecedent,
-            hint: 'The request, transition, or trigger',
-            maxLines: 2,
+          _MultiSelect(
+            label: 'Antecedent',
+            hint: 'What happened right before the behavior?',
+            options: kAntecedentOptions,
+            selected: antecedent.value,
+            onChanged: (v) => antecedent.value = v,
           ),
-          _Field(
+          _MultiSelect(
             label: 'Behavior',
-            controller: behavior,
-            hint: 'What your child did',
-            maxLines: 2,
+            hint: 'What did your child do? (pick at least one)',
+            options: kBehaviorOptions,
+            selected: behavior.value,
+            onChanged: (v) => behavior.value = v,
           ),
-          _Field(
-            label: 'Consequence — what happened right after',
-            controller: consequence,
-            maxLines: 2,
+          _MultiSelect(
+            label: 'What happened afterward',
+            hint: 'What happened right after?',
+            options: kConsequenceOptions,
+            selected: consequence.value,
+            onChanged: (v) => consequence.value = v,
           ),
-          _Field(
-            label: 'Possible trigger',
-            controller: trigger,
-            hint: 'Tired, hungry, overstimulated…',
+          _MultiSelect(
+            label: 'Possible added trigger',
+            hint: 'Was anything else affecting the situation?',
+            options: kTriggerOptions,
+            selected: trigger.value,
+            onChanged: (v) => trigger.value = v,
           ),
-          _Field(label: 'How you responded', controller: response, maxLines: 2),
-          _Field(label: 'Outcome', controller: outcome, maxLines: 2),
+          _MultiSelect(
+            label: 'How I responded',
+            hint:
+                'What actually happened, not what you think should have — '
+                'honest tracking reveals the pattern.',
+            options: kResponseOptions,
+            selected: response.value,
+            onChanged: (v) => response.value = v,
+          ),
+          _SingleSelect(
+            label: 'Outcome',
+            hint: 'What happened as a result?',
+            options: kOutcomeOptions,
+            value: outcome.value,
+            onChanged: (v) => outcome.value = v,
+          ),
           const SizedBox(height: 8),
           FilledButton(
-            onPressed: save,
+            onPressed: canSave ? save : null,
             child: Text(isEditing ? 'Save changes' : 'Save log'),
           ),
+          if (!canSave) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Pick at least one behavior to save.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: context.colors.textSecondary,
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
+}
+
+extension _EmptyToNull on String {
+  String? get emptyToNull => trim().isEmpty ? null : this;
 }
 
 class _WhenField extends StatelessWidget {
@@ -176,32 +213,119 @@ class _WhenField extends StatelessWidget {
   }
 }
 
-class _Field extends StatelessWidget {
+/// Section header shared by both selector types.
+class _FieldLabel extends StatelessWidget {
   final String label;
-  final TextEditingController controller;
   final String? hint;
-  final int maxLines;
-  const _Field({
+  const _FieldLabel({required this.label, this.hint});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: Theme.of(context).textTheme.titleSmall),
+        if (hint != null) ...[
+          const SizedBox(height: 2),
+          Text(
+            hint!,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: context.colors.textSecondary,
+              height: 1.4,
+            ),
+          ),
+        ],
+        const SizedBox(height: 10),
+      ],
+    );
+  }
+}
+
+/// Pick exactly one option (tap again to clear).
+class _SingleSelect extends StatelessWidget {
+  final String label;
+  final String? hint;
+  final List<String> options;
+  final String? value;
+  final ValueChanged<String?> onChanged;
+  const _SingleSelect({
     required this.label,
-    required this.controller,
+    required this.options,
+    required this.value,
+    required this.onChanged,
     this.hint,
-    this.maxLines = 1,
   });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.only(bottom: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: Theme.of(context).textTheme.labelMedium),
-          const SizedBox(height: 6),
-          TextField(
-            controller: controller,
-            maxLines: maxLines,
-            textCapitalization: TextCapitalization.sentences,
-            decoration: InputDecoration(hintText: hint),
+          _FieldLabel(label: label, hint: hint),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final o in options)
+                ChoiceChip(
+                  label: Text(o),
+                  selected: value == o,
+                  showCheckmark: false,
+                  onSelected: (sel) => onChanged(sel ? o : null),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Pick any number of options.
+class _MultiSelect extends StatelessWidget {
+  final String label;
+  final String? hint;
+  final List<String> options;
+  final Set<String> selected;
+  final ValueChanged<Set<String>> onChanged;
+  const _MultiSelect({
+    required this.label,
+    required this.options,
+    required this.selected,
+    required this.onChanged,
+    this.hint,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _FieldLabel(label: label, hint: hint),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final o in options)
+                FilterChip(
+                  label: Text(o),
+                  selected: selected.contains(o),
+                  showCheckmark: true,
+                  onSelected: (sel) {
+                    final next = {...selected};
+                    if (sel) {
+                      next.add(o);
+                    } else {
+                      next.remove(o);
+                    }
+                    onChanged(next);
+                  },
+                ),
+            ],
           ),
         ],
       ),

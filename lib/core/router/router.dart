@@ -22,6 +22,8 @@ import 'package:functional_parenting/features/toolkit/presentation/behavior_trac
 import 'package:functional_parenting/features/toolkit/presentation/paywall_screen.dart';
 import 'package:functional_parenting/features/tools/presentation/assessment_screen.dart';
 import 'package:functional_parenting/features/tools/presentation/decision_tool_screen.dart';
+import 'package:functional_parenting/features/tools/presentation/expert_feedback_screen.dart';
+import 'package:functional_parenting/features/tools/presentation/saved_recommendations_screen.dart';
 import 'package:functional_parenting/features/tools/presentation/scripts_screen.dart';
 import 'package:functional_parenting/features/tools/presentation/tools_screen.dart';
 import 'package:functional_parenting/features/tools/presentation/worksheet_screen.dart';
@@ -92,6 +94,23 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/tools/guide',
         builder: (context, state) => const BehaviorFunctionGuideScreen(),
+      ),
+      GoRoute(
+        path: '/tools/saved',
+        builder: (context, state) => const SavedRecommendationsScreen(),
+      ),
+      // Deep-link a single saved recommendation (full-screen, non-shell so it
+      // can be pushed safely from the saved list).
+      GoRoute(
+        path: '/tools/recommendation/:leaf',
+        builder: (context, state) =>
+            DecisionToolScreen(initialLeafId: state.pathParameters['leaf']),
+      ),
+      // "What should I do?" expert-feedback page — full-screen so it pushes
+      // cleanly from both the in-shell flow and the deep-linked result.
+      GoRoute(
+        path: '/tools/expert-feedback',
+        builder: (context, state) => const ExpertFeedbackScreen(),
       ),
       GoRoute(
         path: '/tools/worksheet/:id',

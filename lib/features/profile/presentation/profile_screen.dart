@@ -98,7 +98,7 @@ class ProfileScreen extends ConsumerWidget {
                   title: 'Starter Toolkit',
                   price: 'one-time',
                   desc:
-                      'Behavior tracker, Family Action Plan builder, and the '
+                      'Behavior tracker (ABC), Family Action Plan builder, and the '
                       'behavior-function guide — yours to keep.',
                 ),
                 const SizedBox(height: 16),
@@ -163,6 +163,11 @@ class ProfileScreen extends ConsumerWidget {
               value: notif.challengeEnabled,
               onChanged: (v) => notifCtrl.setChallengeEnabled(value: v),
             ),
+          ),
+          _SettingsTile(
+            icon: Icons.bookmark_border_rounded,
+            label: 'Saved recommendations',
+            onTap: () => context.push('/tools/saved'),
           ),
           _SettingsTile(
             icon: Icons.self_improvement,
