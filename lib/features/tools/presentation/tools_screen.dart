@@ -21,10 +21,14 @@ class ToolsScreen extends ConsumerWidget {
             'Tools',
             subtitle: 'Practical help for the moments that matter.',
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
 
-          const Eyebrow('Free tools'),
-          const SizedBox(height: 10),
+          // 1. Quick, free help for a behavior happening right now.
+          const _GroupHeader(
+            'In the moment',
+            'Fast help while a behavior is happening — free to use.',
+          ),
+          const SizedBox(height: 14),
           ToolTile(
             icon: Icons.alt_route_rounded,
             iconColor: kBlueDeep,
@@ -49,23 +53,18 @@ class ToolsScreen extends ConsumerWidget {
             onTap: () => context.go('/tools/assessment'),
           ),
 
-          const SizedBox(height: 28),
-          Text(
+          const SizedBox(height: 32),
+
+          // 2. The four phase worksheets, as one guided sequence.
+          const _GroupHeader(
             'Work the framework',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 4),
-          Text(
             'A guided worksheet for each phase of the Functional Parenting '
-            'Framework.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: context.colors.textSecondary,
-            ),
+                'Framework.',
           ),
           const SizedBox(height: 16),
           for (final w in kWorksheets) ...[
             Eyebrow(w.phaseEyebrow),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             _ProTile(
               isPro: isPro,
               icon: w.icon,
@@ -74,12 +73,17 @@ class ToolsScreen extends ConsumerWidget {
               subtitle: w.subtitle,
               route: '/tools/worksheet/${w.id}',
             ),
-            const SizedBox(height: 20),
+            if (w.id != kWorksheets.last.id) const SizedBox(height: 16),
           ],
 
-          const SizedBox(height: 8),
-          const Eyebrow('Starter Toolkit', color: kSageDeep),
-          const SizedBox(height: 10),
+          const SizedBox(height: 32),
+
+          // 3. Longer-running tools you return to over time.
+          const _GroupHeader(
+            'Ongoing toolkit',
+            'Track patterns, make plans, and look things up over time.',
+          ),
+          const SizedBox(height: 14),
           _ProTile(
             isPro: isPro,
             icon: Icons.checklist_rounded,
@@ -108,6 +112,30 @@ class ToolsScreen extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Consistent header for each tool group: a title with a one-line description.
+class _GroupHeader extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  const _GroupHeader(this.title, this.subtitle);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: Theme.of(context).textTheme.headlineSmall),
+        const SizedBox(height: 4),
+        Text(
+          subtitle,
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: context.colors.textSecondary),
+        ),
+      ],
     );
   }
 }

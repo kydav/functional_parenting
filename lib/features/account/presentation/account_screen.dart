@@ -12,8 +12,19 @@ class AccountScreen extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authNotifierProvider);
-    final nameCtrl = useTextEditingController(text: auth.userName);
+    // Seed from the *real* display name (never the email-prefix fallback in
+    // userName) so saving can't overwrite the name with the fallback.
+    final nameCtrl = useTextEditingController(text: auth.displayName);
     final savingName = useState(false);
+
+    // If the profile name hydrates after this screen first built, fill the
+    // field — but never clobber something the user has already typed.
+    useEffect(() {
+      if (nameCtrl.text.trim().isEmpty && auth.displayName.isNotEmpty) {
+        nameCtrl.text = auth.displayName;
+      }
+      return null;
+    }, [auth.displayName]);
 
     Future<void> saveName() async {
       final messenger = ScaffoldMessenger.of(context);

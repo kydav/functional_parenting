@@ -6,6 +6,7 @@ import 'package:functional_parenting/core/providers/pro_provider.dart';
 import 'package:functional_parenting/core/providers/purchase_provider.dart';
 import 'package:functional_parenting/core/services/purchase_service.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
+import 'package:functional_parenting/features/tools/presentation/worksheets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -13,7 +14,9 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 class PaywallScreen extends HookConsumerWidget {
   const PaywallScreen({super.key});
 
-  static const _included = [
+  /// The ongoing tools you return to as you put the framework into practice.
+  /// (The four guided phase worksheets are pulled from [kWorksheets].)
+  static const _ongoing = [
     (
       icon: Icons.checklist_rounded,
       title: 'ABC Behavior Tracker',
@@ -123,7 +126,10 @@ class PaywallScreen extends HookConsumerWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Everything you need to move from "what do I do?" to a plan you can actually follow. Yours to keep — no subscription.',
+                    'Everything you need to move from "what do I do?" to a plan '
+                    'you can actually follow — the full framework, guided '
+                    'worksheets, and the tools to keep going. Yours to keep, '
+                    'no subscription.',
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.8),
                       height: 1.5,
@@ -134,47 +140,58 @@ class PaywallScreen extends HookConsumerWidget {
               ),
             ),
             const SizedBox(height: 24),
+
+            // Group 1 — the four guided phase worksheets.
             Text(
-              "What's included",
+              'Work the framework',
               style: Theme.of(context).textTheme.headlineSmall,
             ),
+            const SizedBox(height: 4),
+            Text(
+              'Guided worksheets that walk you through all four phases of the '
+              'Functional Parenting Framework, one step at a time.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: context.colors.textSecondary,
+                height: 1.5,
+              ),
+            ),
             const SizedBox(height: 12),
-            for (final f in _included) ...[
-              SoftCard(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: kBlue.withValues(alpha: 0.25),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(f.icon, color: kNavy, size: 20),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            f.title,
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            f.body,
-                            style: Theme.of(
-                              context,
-                            ).textTheme.bodyMedium?.copyWith(height: 1.5),
-                          ),
-                        ],
-                      ),
+            SoftCard(
+              child: Column(
+                children: [
+                  for (final w in kWorksheets) ...[
+                    if (w.id != kWorksheets.first.id) ...[
+                      const SizedBox(height: 14),
+                      Divider(height: 1, color: context.colors.border),
+                      const SizedBox(height: 14),
+                    ],
+                    _PhaseRow(
+                      icon: w.icon,
+                      phase: w.phaseEyebrow,
+                      title: w.title,
                     ),
                   ],
-                ),
+                ],
               ),
+            ),
+            const SizedBox(height: 24),
+
+            // Group 2 — the ongoing tools.
+            Text(
+              'Ongoing toolkit',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Tools you return to as you put the framework into practice.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: context.colors.textSecondary,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 12),
+            for (final f in _ongoing) ...[
+              _FeatureCard(icon: f.icon, title: f.title, body: f.body),
               const SizedBox(height: 12),
             ],
             const SizedBox(height: 8),
@@ -211,6 +228,102 @@ class PaywallScreen extends HookConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// A full feature card: tinted icon tile, title, and a descriptive body.
+class _FeatureCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String body;
+  const _FeatureCard({
+    required this.icon,
+    required this.title,
+    required this.body,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SoftCard(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: kBlue.withValues(alpha: 0.25),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: kNavy, size: 20),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 4),
+                Text(
+                  body,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(height: 1.5),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A compact row inside the framework card: icon, phase label, worksheet title.
+class _PhaseRow extends StatelessWidget {
+  final IconData icon;
+  final String phase;
+  final String title;
+  const _PhaseRow({
+    required this.icon,
+    required this.phase,
+    required this.title,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: kBlue.withValues(alpha: 0.25),
+            borderRadius: BorderRadius.circular(11),
+          ),
+          child: Icon(icon, color: kNavy, size: 19),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                phase.toUpperCase(),
+                style: const TextStyle(
+                  color: kBlueDeep,
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.9,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(title, style: Theme.of(context).textTheme.titleMedium),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

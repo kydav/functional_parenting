@@ -1,9 +1,9 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:functional_parenting/core/providers/auth_provider.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
+import 'package:functional_parenting/features/auth/auth_error.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class LoginScreen extends HookConsumerWidget {
@@ -19,22 +19,39 @@ class LoginScreen extends HookConsumerWidget {
     final error = useState<String?>(null);
 
     Future<void> submit() async {
+      // Basic client-side checks so we can show friendly guidance before ever
+      // hitting Firebase.
+      final emailText = email.text.trim();
+      final nameText = name.text.trim();
+      if (isSignUp.value && nameText.isEmpty) {
+        error.value = 'Please enter your name.';
+        return;
+      }
+      if (emailText.isEmpty) {
+        error.value = 'Please enter your email.';
+        return;
+      }
+      if (password.text.isEmpty) {
+        error.value = 'Please enter your password.';
+        return;
+      }
+
       busy.value = true;
       error.value = null;
       try {
         final auth = ref.read(authNotifierProvider);
         if (isSignUp.value) {
           await auth.signUp(
-            email: email.text.trim(),
+            email: emailText,
             password: password.text,
-            name: name.text.trim(),
+            name: nameText,
           );
         } else {
-          await auth.signIn(email: email.text.trim(), password: password.text);
+          await auth.signIn(email: emailText, password: password.text);
         }
         TextInput.finishAutofillContext();
       } catch (e) {
-        error.value = e.toString().replaceAll(RegExp(r'^\[.*?\]\s*'), '');
+        error.value = friendlyAuthError(e);
       } finally {
         busy.value = false;
       }
@@ -46,20 +63,10 @@ class LoginScreen extends HookConsumerWidget {
       try {
         await action();
       } catch (e) {
-        // TEMPORARY DEBUG: surface the full error (type + code + message) so we
-        // can see exactly what a real-device sign-in throws. Revert to the
-        // cancel-swallowing behavior once diagnosed.
-        final b = StringBuffer('type: ${e.runtimeType}\n');
-        if (e is FirebaseAuthException) {
-          b.write('firebase code: ${e.code}\nmessage: ${e.message}\n');
-        } else if (e is PlatformException) {
-          b.write(
-            'platform code: ${e.code}\nmessage: ${e.message}\n'
-            'details: ${e.details}\n',
-          );
+        // Backing out of the native sheet isn't an error — stay quiet.
+        if (!isSignInCancellation(e)) {
+          error.value = friendlyAuthError(e);
         }
-        b.write(e.toString());
-        error.value = b.toString();
       } finally {
         busy.value = false;
       }

@@ -18,6 +18,14 @@ class AuthNotifier extends ChangeNotifier {
 
   String get userEmail => (_auth!.currentUser?.email ?? '');
 
+  /// The user's real display name with no fallback — empty when unset. Use
+  /// this anywhere the value gets *written back* (e.g. the account editor) so
+  /// the email-prefix fallback in [userName] can never be saved as the actual
+  /// name.
+  String get displayName => _auth!.currentUser?.displayName?.trim() ?? '';
+
+  /// Display-only name. Falls back to the email prefix (or "there") when no
+  /// real name is set — safe for greetings, never for persistence.
   String get userName {
     final user = _auth!.currentUser;
     if (user?.displayName?.isNotEmpty ?? false) return user!.displayName!;
@@ -64,6 +72,7 @@ class AuthNotifier extends ChangeNotifier {
       idToken: googleAuth.idToken,
     );
     await _auth!.signInWithCredential(credential);
+    await _ensureDisplayName();
     notifyListeners();
   }
 
@@ -71,7 +80,25 @@ class AuthNotifier extends ChangeNotifier {
   Future<void> signInWithApple() async {
     final provider = AppleAuthProvider();
     await _auth!.signInWithProvider(provider);
+    await _ensureDisplayName();
     notifyListeners();
+  }
+
+  /// Firebase usually sets `displayName` from the social profile on its own,
+  /// but occasionally the top-level field is empty while the name still lives
+  /// in `providerData`. Backfill from there so downstream UI always has a name.
+  Future<void> _ensureDisplayName() async {
+    final user = _auth!.currentUser;
+    if (user == null) return;
+    if (user.displayName?.trim().isNotEmpty ?? false) return;
+    for (final p in user.providerData) {
+      final name = p.displayName?.trim();
+      if (name != null && name.isNotEmpty) {
+        await user.updateDisplayName(name);
+        await user.reload();
+        return;
+      }
+    }
   }
 
   Future<void> sendPasswordReset(String email) async {
