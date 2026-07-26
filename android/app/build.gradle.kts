@@ -1,4 +1,3 @@
-import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
 import java.io.FileInputStream
 import java.util.Properties
 
@@ -62,13 +61,18 @@ android {
             } else {
                 signingConfigs.getByName("debug")
             }
-            // No R8/minification is enabled, so there's no obfuscation mapping
-            // to upload. Disabling this avoids the CrashlyticsMappingFileRelease
-            // task failing the release build. Crashes still report; traces are
-            // already unobfuscated.
-            configure<CrashlyticsExtension> {
-                mappingFileUploadEnabled = false
-            }
+            // R8 code shrinking. Required for the Crashlytics mapping pipeline:
+            // it generates the obfuscation mapping and injects the build ID the
+            // Crashlytics SDK reads at runtime. Without it, release builds fail
+            // the mapping task and/or crash with "Crashlytics build ID is
+            // missing". Resource shrinking is left off to avoid stripping
+            // reflectively-referenced assets.
+            isMinifyEnabled = true
+            isShrinkResources = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
     }
 }
