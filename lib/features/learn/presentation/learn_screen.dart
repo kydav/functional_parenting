@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:functional_parenting/core/presentation/widgets.dart';
 import 'package:functional_parenting/core/providers/pro_provider.dart';
+import 'package:functional_parenting/core/services/analytics_service.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:functional_parenting/features/learn/presentation/learn_content.dart';
 import 'package:functional_parenting/features/tools/presentation/worksheets.dart';
@@ -138,6 +139,9 @@ class _PhaseCard extends StatelessWidget {
     return SoftCard(
       onTap: () {
         if (isPro) {
+          AnalyticsService.instance.track('learn_phase_opened', {
+            'phase': phase.number,
+          });
           final tool = _associatedTool(phase);
           showLearnSheet(
             context,
@@ -149,6 +153,9 @@ class _PhaseCard extends StatelessWidget {
                 width: double.infinity,
                 child: FilledButton.icon(
                   onPressed: () {
+                    AnalyticsService.instance.track('learn_phase_tool_tapped', {
+                      'phase': phase.number,
+                    });
                     Navigator.of(sheetContext).pop();
                     sheetContext.push(tool.route);
                   },

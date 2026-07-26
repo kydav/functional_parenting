@@ -5,6 +5,7 @@ import 'package:functional_parenting/core/models/workshop.dart';
 import 'package:functional_parenting/core/presentation/widgets.dart';
 import 'package:functional_parenting/core/providers/auth_provider.dart';
 import 'package:functional_parenting/core/providers/workshop_provider.dart';
+import 'package:functional_parenting/core/services/analytics_service.dart';
 import 'package:functional_parenting/core/services/notification_service.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -61,7 +62,12 @@ class WorkshopsScreen extends ConsumerWidget {
                     backgroundColor: kBlue,
                     foregroundColor: kNavy,
                   ),
-                  onPressed: () => launchUrl(Uri.parse(kBookACallUrl)),
+                  onPressed: () {
+                    AnalyticsService.instance.track('book_call_tapped', {
+                      'source': 'workshops',
+                    });
+                    launchUrl(Uri.parse(kBookACallUrl));
+                  },
                   icon: const Icon(Icons.calendar_month_rounded, size: 18),
                   label: const Text('Book a free call'),
                 ),
@@ -165,6 +171,9 @@ class _WorkshopCard extends HookConsumerWidget {
         await ref
             .read(workshopRepositoryProvider)
             .reserve(workshop.id, uid, auth.userName);
+        AnalyticsService.instance.track('workshop_registered', {
+          'workshop': workshop.id,
+        });
       } finally {
         busy.value = false;
       }

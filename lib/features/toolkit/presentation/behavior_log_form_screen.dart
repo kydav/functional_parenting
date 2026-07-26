@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:functional_parenting/core/models/behavior_log.dart';
 import 'package:functional_parenting/core/providers/toolkit_provider.dart';
+import 'package:functional_parenting/core/services/analytics_service.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:functional_parenting/features/toolkit/presentation/behavior_log_options.dart';
 import 'package:go_router/go_router.dart';
@@ -27,7 +28,7 @@ class BehaviorLogFormScreen extends HookConsumerWidget {
     );
     final setting = useState<String?>(existing?.setting.emptyToNull);
     final antecedent = useState<Set<String>>({...?existing?.antecedent});
-    final behavior = useState<Set<String>>({...?existing?.behavior});
+    final behavior = useState<String?>(existing?.behavior.emptyToNull);
     final consequence = useState<Set<String>>({...?existing?.consequence});
     final trigger = useState<Set<String>>({...?existing?.trigger});
     final response = useState<Set<String>>({...?existing?.response});
@@ -40,7 +41,7 @@ class BehaviorLogFormScreen extends HookConsumerWidget {
       occurredAt.value = existing.occurredAt;
       setting.value = existing.setting.emptyToNull;
       antecedent.value = {...existing.antecedent};
-      behavior.value = {...existing.behavior};
+      behavior.value = existing.behavior.emptyToNull;
       consequence.value = {...existing.consequence};
       trigger.value = {...existing.trigger};
       response.value = {...existing.response};
@@ -69,14 +70,14 @@ class BehaviorLogFormScreen extends HookConsumerWidget {
       );
     }
 
-    final canSave = behavior.value.isNotEmpty;
+    final canSave = behavior.value != null;
 
     Future<void> save() async {
       if (!canSave) return;
       final log = BehaviorLog(
         id: logId ?? '',
         occurredAt: occurredAt.value,
-        behavior: behavior.value.toList(),
+        behavior: behavior.value ?? '',
         setting: setting.value ?? '',
         antecedent: antecedent.value.toList(),
         consequence: consequence.value.toList(),
@@ -85,6 +86,9 @@ class BehaviorLogFormScreen extends HookConsumerWidget {
         outcome: outcome.value ?? '',
       );
       await ref.read(toolkitRepositoryProvider).saveLog(log);
+      AnalyticsService.instance.track('behavior_log_saved', {
+        'edit': isEditing,
+      });
       if (context.mounted) context.pop();
     }
 
@@ -122,16 +126,18 @@ class BehaviorLogFormScreen extends HookConsumerWidget {
             selected: antecedent.value,
             onChanged: (v) => antecedent.value = v,
           ),
-          _MultiSelect(
+          _SingleSelect(
             label: 'Behavior',
-            hint: 'What did your child do? (pick at least one)',
+            hint: 'What did your child do? (pick one)',
             options: kBehaviorOptions,
-            selected: behavior.value,
+            value: behavior.value,
             onChanged: (v) => behavior.value = v,
           ),
           _MultiSelect(
             label: 'What happened afterward',
-            hint: 'What happened right after?',
+            hint:
+                'What happened right after? Pick everything that applies — '
+                'this is what points to the behavior’s function.',
             options: kConsequenceOptions,
             selected: consequence.value,
             onChanged: (v) => consequence.value = v,
@@ -167,7 +173,7 @@ class BehaviorLogFormScreen extends HookConsumerWidget {
           if (!canSave) ...[
             const SizedBox(height: 8),
             Text(
-              'Pick at least one behavior to save.',
+              'Pick a behavior to save.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: context.colors.textSecondary,

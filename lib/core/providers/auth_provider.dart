@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:functional_parenting/core/services/analytics_service.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 /// Auth state. Backed by Firebase Auth when configured; otherwise it runs a
@@ -44,6 +45,7 @@ class AuthNotifier extends ChangeNotifier {
 
   Future<void> signIn({required String email, required String password}) async {
     await _auth!.signInWithEmailAndPassword(email: email, password: password);
+    AnalyticsService.instance.track('login', {'method': 'password'});
   }
 
   Future<void> signUp({
@@ -58,6 +60,7 @@ class AuthNotifier extends ChangeNotifier {
     if (name != null && name.trim().isNotEmpty) {
       await cred.user?.updateDisplayName(name.trim());
     }
+    AnalyticsService.instance.track('sign_up', {'method': 'password'});
     notifyListeners();
   }
 
@@ -73,6 +76,7 @@ class AuthNotifier extends ChangeNotifier {
     );
     await _auth!.signInWithCredential(credential);
     await _ensureDisplayName();
+    AnalyticsService.instance.track('login', {'method': 'google'});
     notifyListeners();
   }
 
@@ -81,6 +85,7 @@ class AuthNotifier extends ChangeNotifier {
     final provider = AppleAuthProvider();
     await _auth!.signInWithProvider(provider);
     await _ensureDisplayName();
+    AnalyticsService.instance.track('login', {'method': 'apple'});
     notifyListeners();
   }
 

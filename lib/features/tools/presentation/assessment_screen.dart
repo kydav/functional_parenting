@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:functional_parenting/core/presentation/widgets.dart';
 import 'package:functional_parenting/core/providers/pro_provider.dart';
+import 'package:functional_parenting/core/services/analytics_service.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -84,13 +85,20 @@ class AssessmentScreen extends HookConsumerWidget {
     ),
   ];
 
-  static const _labels = ['Rarely', 'Sometimes', 'Often', 'Almost always'];
+  // Index doubles as the score: Never=0 … Almost always=4.
+  static const _labels = [
+    'Never',
+    'Rarely',
+    'Sometimes',
+    'Often',
+    'Almost always',
+  ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isPro = ref.watch(proProvider);
 
-    // 0..3 per question, -1 = unanswered.
+    // 0..4 per question (Never..Almost always), -1 = unanswered.
     final answers = useState<List<int>>(List.filled(_questions.length, -1));
     final submitted = useState(false);
 
@@ -139,7 +147,7 @@ class AssessmentScreen extends HookConsumerWidget {
                             Wrap(
                               spacing: 8,
                               runSpacing: 8,
-                              children: List.generate(4, (v) {
+                              children: List.generate(_labels.length, (v) {
                                 final selected = answers.value[i] == v;
                                 return ChoiceChip(
                                   label: Text(_labels[v]),
@@ -171,7 +179,23 @@ class AssessmentScreen extends HookConsumerWidget {
                     width: double.infinity,
                     child: FilledButton(
                       onPressed: answeredAll
-                          ? () => submitted.value = true
+                          ? () {
+                              final scores = _score(answers.value);
+                              final maxScore = scores.values.fold(
+                                0,
+                                (a, b) => a > b ? a : b,
+                              );
+                              final top = maxScore == 0
+                                  ? 'none'
+                                  : _functions
+                                        .where((f) => scores[f] == maxScore)
+                                        .join(', ');
+                              AnalyticsService.instance.track(
+                                'assessment_completed',
+                                {'top_function': top},
+                              );
+                              submitted.value = true;
+                            }
                           : null,
                       child: const Text('See my result'),
                     ),
@@ -186,7 +210,7 @@ class AssessmentScreen extends HookConsumerWidget {
     final scores = {for (final f in _functions) f: 0};
     for (var i = 0; i < _questions.length; i++) {
       final fn = _questions[i].$2;
-      scores[fn] = scores[fn]! + (answers[i] + 1); // Rarely=1 … Almost always=4
+      scores[fn] = scores[fn]! + answers[i]; // index is the score: Never=0 … 4
     }
     return scores;
   }
@@ -224,6 +248,31 @@ class _Result extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final maxScore = scores.values.fold(0, (a, b) => a > b ? a : b);
+
+    // Everything answered "Never" → no signal to read.
+    if (maxScore == 0) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Eyebrow('No clear pattern', icon: Icons.insights_rounded),
+          const SizedBox(height: 10),
+          Text(
+            'These answers don’t point to a function yet. Try again thinking of '
+            'a specific behavior and how often each statement is true.',
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.5),
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: onRestart,
+              child: const Text('Retake'),
+            ),
+          ),
+        ],
+      );
+    }
+
     // Every function tied for the top score (canonical order preserved).
     final top = _functions.where((f) => scores[f] == maxScore).toList();
     final multiple = top.length > 1;
@@ -277,7 +326,7 @@ class _Result extends StatelessWidget {
                       value: maxScore == 0 ? 0 : scores[f]! / maxScore,
                       minHeight: 10,
                       backgroundColor: context.colors.border,
-                      color: top.contains(f) ? kNavy : kBlue,
+                      color: top.contains(f) ? kBlueDeep : kBlue,
                     ),
                   ),
                 ),

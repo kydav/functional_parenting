@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:functional_parenting/core/models/behavior_log.dart';
 import 'package:functional_parenting/core/presentation/widgets.dart';
 import 'package:functional_parenting/core/providers/toolkit_provider.dart';
+import 'package:functional_parenting/core/services/analytics_service.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -15,7 +16,19 @@ class BehaviorTrackerScreen extends ConsumerWidget {
     final logsAsync = ref.watch(behaviorLogsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Behavior tracker')),
+      appBar: AppBar(
+        title: const Text('Behavior tracker'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.bar_chart_rounded),
+            tooltip: 'Possible functions',
+            onPressed: () {
+              AnalyticsService.instance.track('behavior_patterns_viewed');
+              context.push('/tools/tracker/patterns');
+            },
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/tools/tracker/new'),
         icon: const Icon(Icons.add),
@@ -92,7 +105,7 @@ class _LogCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  log.behavior.isEmpty ? 'Behavior' : log.behavior.join(', '),
+                  log.behavior.isEmpty ? 'Behavior' : log.behavior,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
               ),
@@ -110,7 +123,7 @@ class _LogCard extends StatelessWidget {
             const SizedBox(height: 8),
             _AbcRow(
               a: log.antecedent.join(', '),
-              b: log.behavior.join(', '),
+              b: log.behavior,
               c: log.consequence.join(', '),
             ),
           ],

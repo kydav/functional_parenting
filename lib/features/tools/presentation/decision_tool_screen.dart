@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:functional_parenting/core/presentation/widgets.dart';
 import 'package:functional_parenting/core/providers/pro_provider.dart';
 import 'package:functional_parenting/core/providers/toolkit_provider.dart';
+import 'package:functional_parenting/core/services/analytics_service.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:functional_parenting/features/tools/presentation/decide_content.dart';
 import 'package:go_router/go_router.dart';
@@ -27,7 +28,16 @@ class DecisionToolScreen extends HookConsumerWidget {
     final current = path.value.last;
     final atRoot = identical(current, kDecideRoot);
 
-    void go(DecideStep next) => path.value = [...path.value, next];
+    void go(DecideStep next) {
+      if (next.leaf != null) {
+        AnalyticsService.instance.track('decide_result', {
+          'leaf': next.leaf!.id,
+          'category': next.leaf!.category,
+        });
+      }
+      path.value = [...path.value, next];
+    }
+
     void back() => path.value = [...path.value]..removeLast();
     void restart() => path.value = [kDecideRoot];
 
@@ -52,7 +62,10 @@ class DecisionToolScreen extends HookConsumerWidget {
               _Result(
                 leaf: current.leaf!,
                 isPro: isPro,
-                onExpertFeedback: () => context.push('/tools/expert-feedback'),
+                onExpertFeedback: () {
+                  AnalyticsService.instance.track('decide_expert_feedback');
+                  context.push('/tools/expert-feedback');
+                },
                 onUnlock: () => context.push('/paywall'),
                 onRestart: restart,
               )
@@ -137,6 +150,9 @@ class _Result extends ConsumerWidget {
           category: leaf.category,
           title: leaf.title,
         );
+        AnalyticsService.instance.track('recommendation_saved', {
+          'leaf': leaf.id,
+        });
         messenger.showSnackBar(
           const SnackBar(content: Text('Saved to your recommendations.')),
         );

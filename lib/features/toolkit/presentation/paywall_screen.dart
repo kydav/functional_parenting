@@ -4,6 +4,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:functional_parenting/core/presentation/widgets.dart';
 import 'package:functional_parenting/core/providers/pro_provider.dart';
 import 'package:functional_parenting/core/providers/purchase_provider.dart';
+import 'package:functional_parenting/core/services/analytics_service.dart';
 import 'package:functional_parenting/core/services/purchase_service.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:functional_parenting/features/tools/presentation/worksheets.dart';
@@ -48,11 +49,17 @@ class PaywallScreen extends HookConsumerWidget {
     final package = ref.watch(proPackageProvider).value;
     final busy = useState(false);
 
+    useEffect(() {
+      AnalyticsService.instance.track('paywall_viewed');
+      return null;
+    }, const []);
+
     void snack(String msg) => ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(msg)));
 
     Future<void> unlock() async {
+      AnalyticsService.instance.track('toolkit_unlock_tapped');
       if (!PurchaseService.instance.isConfigured) {
         snack('Purchases are being set up — available very soon.');
         return;
@@ -67,6 +74,7 @@ class PaywallScreen extends HookConsumerWidget {
         final info = await Purchases.purchasePackage(pkg);
         if (!context.mounted) return;
         if (PurchaseService.instance.entitlementActive(info)) {
+          AnalyticsService.instance.track('toolkit_unlocked');
           snack('You’re all set — the toolkit is unlocked.');
           context.pop();
         }
@@ -91,6 +99,7 @@ class PaywallScreen extends HookConsumerWidget {
         final info = await Purchases.restorePurchases();
         if (!context.mounted) return;
         if (PurchaseService.instance.entitlementActive(info)) {
+          AnalyticsService.instance.track('purchase_restored');
           snack('Purchase restored — welcome back.');
           context.pop();
         } else {

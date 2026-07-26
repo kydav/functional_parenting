@@ -18,6 +18,7 @@ import 'package:functional_parenting/features/toolkit/presentation/action_plan_v
 import 'package:functional_parenting/features/toolkit/presentation/action_plans_screen.dart';
 import 'package:functional_parenting/features/toolkit/presentation/behavior_function_guide_screen.dart';
 import 'package:functional_parenting/features/toolkit/presentation/behavior_log_form_screen.dart';
+import 'package:functional_parenting/features/toolkit/presentation/behavior_patterns_screen.dart';
 import 'package:functional_parenting/features/toolkit/presentation/behavior_tracker_screen.dart';
 import 'package:functional_parenting/features/toolkit/presentation/paywall_screen.dart';
 import 'package:functional_parenting/features/tools/presentation/assessment_screen.dart';
@@ -85,6 +86,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/tools/tracker/new',
         builder: (context, state) => const BehaviorLogFormScreen(),
+      ),
+      // Must precede '/tools/tracker/:id' so "patterns" isn't read as an id.
+      GoRoute(
+        path: '/tools/tracker/patterns',
+        builder: (context, state) => const BehaviorPatternsScreen(),
       ),
       GoRoute(
         path: '/tools/tracker/:id',

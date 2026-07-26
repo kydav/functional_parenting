@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:functional_parenting/core/constants.dart';
 import 'package:functional_parenting/core/presentation/widgets.dart';
+import 'package:functional_parenting/core/services/analytics_service.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -61,7 +62,12 @@ class ExpertFeedbackScreen extends StatelessWidget {
                       foregroundColor: kNavy,
                       minimumSize: const Size.fromHeight(52),
                     ),
-                    onPressed: () => launchUrl(Uri.parse(kBookACallUrl)),
+                    onPressed: () {
+                      AnalyticsService.instance.track('book_call_tapped', {
+                        'source': 'expert_feedback',
+                      });
+                      launchUrl(Uri.parse(kBookACallUrl));
+                    },
                     icon: const Icon(Icons.calendar_month_rounded, size: 18),
                     label: const Text('Book My Free Assessment Call'),
                   ),

@@ -4,15 +4,17 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// behavior, and what happened after (consequence), plus context that helps
 /// surface patterns over time.
 ///
-/// The middle fields are multi-select (stored as string arrays); [setting] and
-/// [outcome] are single-select. Parsing tolerates the old free-text format so
-/// pre-existing logs keep rendering.
+/// [antecedent], [consequence], [trigger] and [response] are multi-select
+/// (stored as string arrays); [setting], [behavior] and [outcome] are
+/// single-select. Behavior is single-select so each behavior graphs on its own.
+/// Parsing tolerates the old free-text / list format so pre-existing logs keep
+/// rendering.
 class BehaviorLog {
   final String id;
   final DateTime occurredAt;
   final String setting; // where it happened (single-select)
   final List<String> antecedent; // what happened just before
-  final List<String> behavior;
+  final String behavior; // single-select
   final List<String> consequence; // what happened right after
   final List<String> trigger; // possible added triggers
   final List<String> response; // how the parent responded
@@ -21,7 +23,7 @@ class BehaviorLog {
   const BehaviorLog({
     required this.id,
     required this.occurredAt,
-    this.behavior = const [],
+    this.behavior = '',
     this.setting = '',
     this.antecedent = const [],
     this.consequence = const [],
@@ -40,13 +42,20 @@ class BehaviorLog {
     return const [];
   }
 
+  /// Coerce a stored value into a single string (first item of a legacy list).
+  static String _single(Object? v) {
+    if (v is String) return v.trim();
+    if (v is List && v.isNotEmpty) return v.first.toString().trim();
+    return '';
+  }
+
   factory BehaviorLog.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final d = doc.data() ?? const {};
     final ts = d['occurredAt'];
     return BehaviorLog(
       id: doc.id,
       occurredAt: ts is Timestamp ? ts.toDate() : DateTime.now(),
-      behavior: _list(d['behavior']),
+      behavior: _single(d['behavior']),
       setting: (d['setting'] ?? '') as String,
       antecedent: _list(d['antecedent']),
       consequence: _list(d['consequence']),
@@ -71,7 +80,7 @@ class BehaviorLog {
     DateTime? occurredAt,
     String? setting,
     List<String>? antecedent,
-    List<String>? behavior,
+    String? behavior,
     List<String>? consequence,
     List<String>? trigger,
     List<String>? response,

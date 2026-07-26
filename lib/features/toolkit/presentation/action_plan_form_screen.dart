@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:functional_parenting/core/models/action_plan.dart';
 import 'package:functional_parenting/core/presentation/widgets.dart';
 import 'package:functional_parenting/core/providers/toolkit_provider.dart';
+import 'package:functional_parenting/core/services/analytics_service.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:functional_parenting/features/tools/presentation/worksheet_screen.dart';
 import 'package:functional_parenting/features/tools/presentation/worksheets.dart';
@@ -81,6 +82,7 @@ class ActionPlanFormScreen extends HookConsumerWidget {
       }
       set(structure, seeds['structure']!);
       set(response, seeds['response']!);
+      AnalyticsService.instance.track('plan_prefilled_from_worksheets');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Filled in from your worksheet answers.')),
       );
@@ -99,6 +101,7 @@ class ActionPlanFormScreen extends HookConsumerWidget {
         createdAt: existing?.createdAt ?? DateTime.now(),
       );
       final id = await ref.read(toolkitRepositoryProvider).savePlan(plan);
+      AnalyticsService.instance.track('plan_saved', {'edit': isEditing});
       if (!context.mounted) return;
       if (isEditing) {
         context.pop();

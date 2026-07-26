@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/foundation.dart';
 
@@ -16,5 +18,11 @@ class AnalyticsService {
     } catch (e) {
       debugPrint('Analytics event "$name" skipped: $e');
     }
+  }
+
+  /// Fire-and-forget variant so UI call sites don't need to await or wrap in
+  /// `unawaited`. Same best-effort semantics as [logEvent].
+  void track(String name, [Map<String, Object>? parameters]) {
+    unawaited(logEvent(name, parameters));
   }
 }

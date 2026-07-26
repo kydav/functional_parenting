@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:functional_parenting/core/presentation/widgets.dart';
 import 'package:functional_parenting/core/providers/toolkit_provider.dart';
+import 'package:functional_parenting/core/services/analytics_service.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -39,8 +40,13 @@ class SavedRecommendationsScreen extends ConsumerWidget {
             children: [
               for (final r in saved) ...[
                 SoftCard(
-                  onTap: () =>
-                      context.push('/tools/recommendation/${r.leafId}'),
+                  onTap: () {
+                    AnalyticsService.instance.track(
+                      'saved_recommendation_opened',
+                      {'leaf': r.leafId},
+                    );
+                    context.push('/tools/recommendation/${r.leafId}');
+                  },
                   child: Row(
                     children: [
                       Container(

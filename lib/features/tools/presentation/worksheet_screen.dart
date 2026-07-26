@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:functional_parenting/core/presentation/widgets.dart';
 import 'package:functional_parenting/core/providers/toolkit_provider.dart';
+import 'package:functional_parenting/core/services/analytics_service.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:functional_parenting/features/tools/presentation/worksheets.dart';
 import 'package:go_router/go_router.dart';
@@ -76,6 +77,7 @@ class WorksheetScreen extends HookConsumerWidget {
       await ref
           .read(toolkitRepositoryProvider)
           .saveWorksheet(worksheetId, result);
+      AnalyticsService.instance.track('worksheet_saved', {'id': worksheetId});
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,

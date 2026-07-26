@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:functional_parenting/core/presentation/widgets.dart';
 import 'package:functional_parenting/core/providers/pro_provider.dart';
+import 'package:functional_parenting/core/services/analytics_service.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:functional_parenting/features/tools/presentation/worksheets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+
+void _openTool(BuildContext context, String tool, String route) {
+  AnalyticsService.instance.track('tool_open', {'tool': tool});
+  context.go(route);
+}
 
 class ToolsScreen extends ConsumerWidget {
   const ToolsScreen({super.key});
@@ -34,7 +40,7 @@ class ToolsScreen extends ConsumerWidget {
             iconColor: kBlueDeep,
             title: 'What should I do?',
             subtitle: 'Guided decisions for a behavior happening right now',
-            onTap: () => context.go('/tools/decide'),
+            onTap: () => _openTool(context, 'decide', '/tools/decide'),
           ),
           const SizedBox(height: 12),
           ToolTile(
@@ -42,7 +48,7 @@ class ToolsScreen extends ConsumerWidget {
             iconColor: kSageDeep,
             title: 'Scripts library',
             subtitle: 'Exact words for tough situations',
-            onTap: () => context.go('/tools/scripts'),
+            onTap: () => _openTool(context, 'scripts', '/tools/scripts'),
           ),
           const SizedBox(height: 12),
           ToolTile(
@@ -50,7 +56,7 @@ class ToolsScreen extends ConsumerWidget {
             iconColor: kSuccessGreen,
             title: 'Behavior-pattern check',
             subtitle: 'A quick read on what might be driving the behavior',
-            onTap: () => context.go('/tools/assessment'),
+            onTap: () => _openTool(context, 'assessment', '/tools/assessment'),
           ),
 
           const SizedBox(height: 32),
@@ -165,7 +171,15 @@ class _ProTile extends StatelessWidget {
       title: title,
       subtitle: subtitle,
       trailing: unlocked ? null : const ProBadge(),
-      onTap: () => unlocked ? context.push(route!) : context.push('/paywall'),
+      onTap: () {
+        if (unlocked) {
+          AnalyticsService.instance.track('tool_open', {'tool': title});
+          context.push(route!);
+        } else {
+          AnalyticsService.instance.track('paywall_from_tool', {'tool': title});
+          context.push('/paywall');
+        }
+      },
     );
   }
 }

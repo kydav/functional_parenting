@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:functional_parenting/core/services/analytics_service.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
 
@@ -21,6 +22,7 @@ class _ResetScreenState extends State<ResetScreen>
   @override
   void initState() {
     super.initState();
+    AnalyticsService.instance.track('reset_started');
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 16),
