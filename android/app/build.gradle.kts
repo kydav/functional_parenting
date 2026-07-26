@@ -1,3 +1,4 @@
+import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
 import java.io.FileInputStream
 import java.util.Properties
 
@@ -60,6 +61,13 @@ android {
                 signingConfigs.getByName("release")
             } else {
                 signingConfigs.getByName("debug")
+            }
+            // No R8/minification is enabled, so there's no obfuscation mapping
+            // to upload. Disabling this avoids the CrashlyticsMappingFileRelease
+            // task failing the release build. Crashes still report; traces are
+            // already unobfuscated.
+            configure<CrashlyticsExtension> {
+                mappingFileUploadEnabled = false
             }
         }
     }
