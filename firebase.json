@@ -16,7 +16,7 @@
         "default": {
           "projectId": "functional-parenting",
           "appId": "1:25230819434:ios:2d7954c52567fdbc59ca13",
-          "uploadDebugSymbols": false,
+          "uploadDebugSymbols": true,
           "fileOutput": "ios/Runner/GoogleService-Info.plist"
         }
       },
