@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -27,21 +25,16 @@ class TodayScreen extends HookConsumerWidget {
     final reflectionCtrl = useTextEditingController(
       text: engagement.reflectionToday,
     );
+    useEffect(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        NotificationService.instance.notifyAndRequest(context);
+      });
+      return null;
+    }, []);
 
     // Contextually request notification permission once we're in the app (the
     // toggles default on). Idempotent — iOS/Android won't re-prompt after the
     // first decision; if granted we (re)apply the saved schedules.
-    useEffect(() {
-      Future.microtask(() async {
-        final settings = ref.read(notificationSettingsProvider);
-        if (!settings.tipEnabled && !settings.challengeEnabled) return;
-        if (await NotificationService.instance.requestPermission()) {
-          await ref.read(notificationSettingsProvider.notifier).applyOnLaunch();
-        }
-      });
-      return null;
-    }, const []);
-
     return PageBody(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

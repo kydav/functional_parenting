@@ -2,143 +2,99 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:functional_parenting/core/models/content.dart';
+import 'package:functional_parenting/core/providers/content_seed.dart';
 import 'package:functional_parenting/core/providers/pro_provider.dart';
 import 'package:functional_parenting/core/services/content_repository.dart';
 
 /// ── Seed content ────────────────────────────────────────────────────────────
-/// Bundled starter library. Used as the fallback when Firestore is unavailable
-/// or a collection is empty, and as the payload for the one-tap "seed" action
-/// in the admin CMS. Copy is illustrative — replace with the founder's material
-/// (either here, or by editing in the app once seeded).
+/// Two tiers, both bundled (used as the fallback so the app is never blank, and
+/// as the payload for the admin "Seed to Firestore" action):
+///  • Free rotation — 7 of each, undated. Free users cycle these day to day.
+///  • Pro year library — 365 of each, tagged with a calendar month/day so Pro
+///    users get the specific item for today's date.
+/// Raw strings live in content_seed.dart; ids and `order` are by position, and
+/// Pro items get their month/day from day-of-year (item 1 → Jan 1 … 365 → Dec 31).
 
-const kSeedTips = <ParentingTip>[
-  ParentingTip(
-    id: 't1',
-    text:
-        'Behavior is communication. Before you correct it, ask what it is trying to tell you.',
-  ),
-  ParentingTip(
-    id: 't2',
-    order: 1,
-    text:
-        'Connect before you direct — a regulated child hears you; a flooded one cannot.',
-  ),
-  ParentingTip(
-    id: 't3',
-    order: 2,
-    text:
-        'Name the feeling out loud. "You are really frustrated" lowers the temperature faster than "calm down."',
-  ),
-  ParentingTip(
-    id: 't4',
-    order: 3,
-    text:
-        'Give the transition a countdown. Surprise endings feel like losses to a child.',
-  ),
-  ParentingTip(
-    id: 't5',
-    order: 4,
-    text:
-        'Praise the effort, not the outcome. Effort is the thing they can repeat tomorrow.',
-  ),
-  ParentingTip(
-    id: 't6',
-    order: 5,
-    text:
-        'A consequence teaches best when it is small, immediate, and predictable — not big and delayed.',
-  ),
-  ParentingTip(
-    id: 't7',
-    order: 6,
-    text:
-        'Your calm is the intervention. Regulate yourself first, then the room follows.',
-  ),
+// Fixed non-leap calendar; maps day-of-year (1..365) → (month, day).
+const _monthLengths = <int>[31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+(int, int) _monthDay(int dayOfYear) {
+  var d = dayOfYear;
+  for (var m = 0; m < 12; m++) {
+    if (d <= _monthLengths[m]) return (m + 1, d);
+    d -= _monthLengths[m];
+  }
+  return (12, 31);
+}
+
+// ── Free rotation (7 each, undated, free) ──
+final kFreeTips = <ParentingTip>[
+  for (var i = 0; i < kFreeTipTexts.length; i++)
+    ParentingTip(id: 'ft${i + 1}', order: i, text: kFreeTipTexts[i]),
+];
+final kFreeChallenges = <ParentingChallenge>[
+  for (var i = 0; i < kFreeChallengeSeeds.length; i++)
+    ParentingChallenge(
+      id: 'fc${i + 1}',
+      order: i,
+      title: kFreeChallengeSeeds[i].$1,
+      description: kFreeChallengeSeeds[i].$2,
+    ),
+];
+final kFreeReflections = <ReflectionPrompt>[
+  for (var i = 0; i < kFreeReflectionPrompts.length; i++)
+    ReflectionPrompt(
+      id: 'fr${i + 1}',
+      order: i,
+      prompt: kFreeReflectionPrompts[i],
+    ),
 ];
 
-const kSeedChallenges = <ParentingChallenge>[
-  ParentingChallenge(
-    id: 'c1',
-    title: 'One-on-one ten',
-    description:
-        'Spend ten uninterrupted, phone-free minutes today letting your child lead the play.',
-  ),
-  ParentingChallenge(
-    id: 'c2',
-    order: 1,
-    title: 'Catch them being good',
-    description:
-        'Notice and name three positive behaviors out loud before dinner.',
-  ),
-  ParentingChallenge(
-    id: 'c3',
-    order: 2,
-    title: 'The pause',
-    description:
-        'Next time you feel the urge to react, take one slow breath before you respond.',
-  ),
-  ParentingChallenge(
-    id: 'c4',
-    order: 3,
-    title: "Ask, don't tell",
-    description: 'Replace one command today with a curious question.',
-  ),
-  ParentingChallenge(
-    id: 'c5',
-    order: 4,
-    title: 'Name it to tame it',
-    description:
-        "Label your child's emotion once today before offering any solution.",
-  ),
-  ParentingChallenge(
-    id: 'c6',
-    order: 5,
-    title: 'Repair',
-    description:
-        'If a moment goes sideways, circle back later and reconnect. Repair is the lesson.',
-  ),
-  ParentingChallenge(
-    id: 'c7',
-    order: 6,
-    title: 'Predictable transition',
-    description: 'Give a five-minute warning before every transition today.',
-  ),
-];
+// ── Pro year library (365 each, date-tagged, pro) ──
+ParentingTip _proTip(int i) {
+  final (m, d) = _monthDay(i + 1);
+  return ParentingTip(
+    id: 't${i + 1}',
+    order: i,
+    text: kTipTexts[i],
+    pro: true,
+    month: m,
+    day: d,
+  );
+}
 
-const kSeedReflections = <ReflectionPrompt>[
-  ReflectionPrompt(
-    id: 'r1',
-    prompt: 'When did I feel most connected to my child today?',
-  ),
-  ReflectionPrompt(
-    id: 'r2',
-    order: 1,
-    prompt: 'What triggered me today, and what was underneath it?',
-  ),
-  ReflectionPrompt(
-    id: 'r3',
-    order: 2,
-    prompt: "What was my child's behavior trying to communicate?",
-  ),
-  ReflectionPrompt(
-    id: 'r4',
-    order: 3,
-    prompt: 'Where did I respond instead of react? How did it go?',
-  ),
-  ReflectionPrompt(
-    id: 'r5',
-    order: 4,
-    prompt: 'What is one thing I want to do differently tomorrow?',
-  ),
-  ReflectionPrompt(
-    id: 'r6',
-    order: 5,
-    prompt: 'What did I handle well today that I want to remember?',
-  ),
-  ReflectionPrompt(
-    id: 'r7',
-    order: 6,
-    prompt: 'When did I model the calm I want my child to learn?',
-  ),
+ParentingChallenge _proChallenge(int i) {
+  final (m, d) = _monthDay(i + 1);
+  return ParentingChallenge(
+    id: 'c${i + 1}',
+    order: i,
+    title: kChallengeSeeds[i].$1,
+    description: kChallengeSeeds[i].$2,
+    pro: true,
+    month: m,
+    day: d,
+  );
+}
+
+ReflectionPrompt _proReflection(int i) {
+  final (m, d) = _monthDay(i + 1);
+  return ReflectionPrompt(
+    id: 'r${i + 1}',
+    order: i,
+    prompt: kReflectionPrompts[i],
+    pro: true,
+    month: m,
+    day: d,
+  );
+}
+
+final kProTips = <ParentingTip>[
+  for (var i = 0; i < kTipTexts.length; i++) _proTip(i),
+];
+final kProChallenges = <ParentingChallenge>[
+  for (var i = 0; i < kChallengeSeeds.length; i++) _proChallenge(i),
+];
+final kProReflections = <ReflectionPrompt>[
+  for (var i = 0; i < kReflectionPrompts.length; i++) _proReflection(i),
 ];
 
 const kSeedScripts = <Script>[
@@ -201,21 +157,22 @@ final contentRepositoryProvider = Provider<ContentRepository?>((ref) {
 
 /// ── Live streams (all items incl. inactive — used by the admin CMS) ──────────
 
+// Free rotation collections.
 final tipsStreamProvider = StreamProvider<List<ParentingTip>>((ref) {
   final repo = ref.watch(contentRepositoryProvider);
-  return repo?.watchTips() ?? Stream.value(kSeedTips);
+  return repo?.watchTips() ?? Stream.value(kFreeTips);
 });
 
 final challengesStreamProvider = StreamProvider<List<ParentingChallenge>>((
   ref,
 ) {
   final repo = ref.watch(contentRepositoryProvider);
-  return repo?.watchChallenges() ?? Stream.value(kSeedChallenges);
+  return repo?.watchChallenges() ?? Stream.value(kFreeChallenges);
 });
 
 final reflectionsStreamProvider = StreamProvider<List<ReflectionPrompt>>((ref) {
   final repo = ref.watch(contentRepositoryProvider);
-  return repo?.watchReflections() ?? Stream.value(kSeedReflections);
+  return repo?.watchReflections() ?? Stream.value(kFreeReflections);
 });
 
 final scriptsStreamProvider = StreamProvider<List<Script>>((ref) {
@@ -223,52 +180,20 @@ final scriptsStreamProvider = StreamProvider<List<Script>>((ref) {
   return repo?.watchScripts() ?? Stream.value(kSeedScripts);
 });
 
-/// ── Resolved, app-facing lists ───────────────────────────────────────────────
-/// Active items the current user is allowed to see, with a synchronous fallback
-/// to the seed so the app is never blank (during load, offline, before seeding,
-/// or in demo mode). Pro-only items are hidden from non-Pro users.
+/// ── App-facing content (fully static) ───────────────────────────────────────
+/// The bundled library is the source of truth. The app reads no Firestore for
+/// content, so there are zero per-user content-read costs. The CMS + Seed button
+/// still write Firestore, but nothing in the app reads it back until the
+/// Firestore path is re-enabled.
 
-List<T> _resolve<T extends CmsItem>(
-  AsyncValue<List<T>> async,
-  List<T> seed, {
-  required bool isPro,
-}) {
-  final live = async.value;
-  final source = (live == null || live.isEmpty) ? seed : live;
-  final visible = source.where((e) => e.active && (isPro || !e.pro)).toList();
-  return visible.isEmpty ? seed : visible;
-}
+final scriptsProvider = Provider<List<Script>>((ref) {
+  final isPro = ref.watch(proProvider);
+  return kSeedScripts.where((s) => s.active && (isPro || !s.pro)).toList();
+});
 
-final tipsProvider = Provider<List<ParentingTip>>(
-  (ref) => _resolve(
-    ref.watch(tipsStreamProvider),
-    kSeedTips,
-    isPro: ref.watch(proProvider),
-  ),
-);
-final challengesProvider = Provider<List<ParentingChallenge>>(
-  (ref) => _resolve(
-    ref.watch(challengesStreamProvider),
-    kSeedChallenges,
-    isPro: ref.watch(proProvider),
-  ),
-);
-final reflectionsProvider = Provider<List<ReflectionPrompt>>(
-  (ref) => _resolve(
-    ref.watch(reflectionsStreamProvider),
-    kSeedReflections,
-    isPro: ref.watch(proProvider),
-  ),
-);
-final scriptsProvider = Provider<List<Script>>(
-  (ref) => _resolve(
-    ref.watch(scriptsStreamProvider),
-    kSeedScripts,
-    isPro: ref.watch(proProvider),
-  ),
-);
-
-/// ── Daily selection (deterministic per day) ──────────────────────────────────
+/// ── Daily selection ──────────────────────────────────────────────────────────
+/// Free users cycle the small rotation by day. Pro users get the item tagged
+/// for today's calendar date (with a graceful fallback, e.g. on Feb 29).
 
 int _dayIndex(int length) {
   if (length == 0) return 0;
@@ -276,17 +201,30 @@ int _dayIndex(int length) {
   return epochDay % length;
 }
 
+int _dayOfYear(DateTime d) => d.difference(DateTime(d.year)).inDays + 1;
+
+T _pickForToday<T extends CmsItem>(List<T> items) {
+  final now = DateTime.now();
+  for (final it in items) {
+    if (it.month == now.month && it.day == now.day) return it;
+  }
+  // No exact match (incomplete set, or Feb 29) — cycle the dated items.
+  final dated = items.where((e) => e.month != null).toList();
+  final pool = dated.isEmpty ? items : dated;
+  return pool[(_dayOfYear(now) - 1) % pool.length];
+}
+
 final dailyTipProvider = Provider<ParentingTip>((ref) {
-  final tips = ref.watch(tipsProvider);
-  return tips[_dayIndex(tips.length)];
+  if (ref.watch(proProvider)) return _pickForToday(kProTips);
+  return kFreeTips[_dayIndex(kFreeTips.length)];
 });
 
 final dailyChallengeProvider = Provider<ParentingChallenge>((ref) {
-  final items = ref.watch(challengesProvider);
-  return items[_dayIndex(items.length)];
+  if (ref.watch(proProvider)) return _pickForToday(kProChallenges);
+  return kFreeChallenges[_dayIndex(kFreeChallenges.length)];
 });
 
 final dailyReflectionProvider = Provider<ReflectionPrompt>((ref) {
-  final items = ref.watch(reflectionsProvider);
-  return items[_dayIndex(items.length)];
+  if (ref.watch(proProvider)) return _pickForToday(kProReflections);
+  return kFreeReflections[_dayIndex(kFreeReflections.length)];
 });

@@ -1,20 +1,28 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
 /// Schedules the app's daily reminder notifications (tip + challenge). Uses
 /// inexact daily scheduling so it needs no exact-alarm permission on Android.
 class NotificationService {
-  NotificationService._();
-  static final NotificationService instance = NotificationService._();
+  NotificationService._(this._prefs);
+  static late final NotificationService instance;
+
+  static Future<void> initialize(SharedPreferences prefs) async {
+    instance = NotificationService._(prefs);
+  }
 
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
+  final SharedPreferences _prefs;
 
   // Fixed notification ids so re-scheduling replaces the prior one.
   static const int tipId = 1001;
   static const int challengeId = 1002;
+  static const _kPrompted = 'notif_prompted';
 
   static const _channel = AndroidNotificationChannel(
     'daily_reminders',
@@ -64,6 +72,32 @@ class NotificationService {
     await android?.createNotificationChannel(_workshopChannel);
 
     _initialized = true;
+  }
+
+  Future<void> notifyAndRequest(BuildContext context) async {
+    final prompted = _prefs.getBool(_kPrompted) ?? false;
+    if (!prompted) {
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          title: const Text('Welcome!'),
+          content: const Text(
+            'Please enable notifications so we can send you daily reminders and tips. You can always change this later in Settings.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await _prefs.setBool(_kPrompted, true);
+                await requestPermission();
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   /// Prompts for notification permission. Returns true if granted (or already).

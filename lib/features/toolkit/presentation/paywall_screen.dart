@@ -20,6 +20,13 @@ class PaywallScreen extends HookConsumerWidget {
   /// are kept to a single punchy line so the whole list stays compact.
   static const _ongoing = [
     (
+      icon: Icons.calendar_today_rounded,
+      title: 'A full year of daily content',
+      body:
+          'A fresh tip, challenge, and reflection for every day — 365 of each, '
+          'instead of the same handful on repeat.',
+    ),
+    (
       icon: Icons.alt_route_rounded,
       title: 'Full “What should I do?” response',
       body:
@@ -66,7 +73,7 @@ class PaywallScreen extends HookConsumerWidget {
       }
       final pkg = package;
       if (pkg == null) {
-        snack('The toolkit isn’t available to buy just yet.');
+        snack("The toolkit isn't available to buy just yet.");
         return;
       }
       busy.value = true;
@@ -75,14 +82,14 @@ class PaywallScreen extends HookConsumerWidget {
         if (!context.mounted) return;
         if (PurchaseService.instance.entitlementActive(info)) {
           AnalyticsService.instance.track('toolkit_unlocked');
-          snack('You’re all set — the toolkit is unlocked.');
+          snack("You're all set — the toolkit is unlocked.");
           context.pop();
         }
       } on PlatformException catch (e) {
         final code = PurchasesErrorHelper.getErrorCode(e);
         if (code != PurchasesErrorCode.purchaseCancelledError &&
             context.mounted) {
-          snack('Purchase couldn’t complete. Please try again.');
+          snack("Purchase couldn't complete. Please try again.");
         }
       } finally {
         if (context.mounted) busy.value = false;

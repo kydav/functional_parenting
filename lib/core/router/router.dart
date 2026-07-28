@@ -34,25 +34,34 @@ import 'package:go_router/go_router.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authNotifier = ref.read(authNotifierProvider);
+  final introSeen = ref.read(introSeenProvider);
+  final initialLocation = !introSeen
+      ? '/welcome'
+      : authNotifier.isLoggedIn
+      ? '/today'
+      : '/login';
   return GoRouter(
-    initialLocation: '/today',
+    initialLocation: initialLocation,
     refreshListenable: authNotifier,
     redirect: (BuildContext context, GoRouterState state) {
+      final onWelcome = state.matchedLocation == '/welcome';
+      final introSeen = ref.read(introSeenProvider);
       final loggedIn = authNotifier.isLoggedIn;
       final onLogin = state.matchedLocation == '/login';
-      if (!loggedIn && !onLogin) return '/login';
-      if (loggedIn && onLogin) return '/today';
-      // First-login intro carousel, shown once per device.
-      final onWelcome = state.matchedLocation == '/welcome';
-      if (loggedIn && !ref.read(introSeenProvider) && !onWelcome) {
-        return '/welcome';
-      }
-      // Admin areas are gated to admins.
-      if (state.matchedLocation.startsWith('/admin') &&
+      String? dest;
+      if (!introSeen && !onWelcome) {
+        // Intro carousel on first open (once per device) — before login.
+        dest = '/welcome';
+      } else if (!loggedIn && !onLogin && !onWelcome) {
+        // Everything but the intro requires auth.
+        dest = '/login';
+      } else if (loggedIn && onLogin) {
+        dest = '/today';
+      } else if (state.matchedLocation.startsWith('/admin') &&
           !ref.read(isAdminProvider)) {
-        return '/today';
+        dest = '/today';
       }
-      return null;
+      return dest;
     },
     routes: [
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),

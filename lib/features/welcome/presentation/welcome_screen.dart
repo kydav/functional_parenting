@@ -8,7 +8,7 @@ import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-/// One slide of the first-login intro carousel.
+/// One slide of the first-open intro carousel.
 class _IntroSlide {
   final IconData icon;
   final Color accent;
@@ -22,9 +22,17 @@ class _IntroSlide {
   });
 }
 
-/// The intro story, distilled from the toolkit welcome page: overwhelm →
-/// reframe → the method → the goal.
+/// The intro story: welcome → overwhelm → reframe → the method → the goal.
 const _slides = <_IntroSlide>[
+  _IntroSlide(
+    icon: Icons.waving_hand_rounded,
+    accent: kSageDeep,
+    headline: 'Welcome to Functional Parenting',
+    body:
+        'A calmer, more confident way to handle your child’s behavior — '
+        'understand why it’s happening, then respond with clear, functional '
+        'strategies. Here’s the idea in about a minute.',
+  ),
   _IntroSlide(
     icon: Icons.cyclone_rounded,
     accent: kBlueDeep,
@@ -65,8 +73,9 @@ const _slides = <_IntroSlide>[
   ),
 ];
 
-/// Full-screen, swipeable first-login intro. Shown once (gated by
-/// [introSeenProvider] in the router); also reachable later as a replay.
+/// Full-screen, swipeable first-open intro. Shown once per device (gated by
+/// [introSeenProvider] in the router, before login); also reachable later as a
+/// replay.
 class WelcomeScreen extends HookConsumerWidget {
   const WelcomeScreen({super.key});
 

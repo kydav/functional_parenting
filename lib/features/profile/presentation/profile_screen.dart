@@ -121,11 +121,11 @@ class ProfileScreen extends ConsumerWidget {
           if (isAdmin) ...[
             const Eyebrow('Founder tools'),
             const SizedBox(height: 10),
-            _SettingsTile(
-              icon: Icons.edit_note_rounded,
-              label: 'Content CMS',
-              onTap: () => context.push('/admin'),
-            ),
+            // _SettingsTile(
+            //   icon: Icons.edit_note_rounded,
+            //   label: 'Content CMS',
+            //   onTap: () => context.push('/admin'),
+            // ),
             _SettingsTile(
               icon: Icons.event_available_outlined,
               label: 'Manage workshops',

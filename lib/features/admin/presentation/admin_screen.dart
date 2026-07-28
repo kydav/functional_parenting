@@ -24,6 +24,13 @@ class AdminScreen extends HookConsumerWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Content CMS'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.cloud_upload_outlined),
+              tooltip: 'Seed to Firestore',
+              onPressed: repo == null ? null : () => _confirmSeed(context, ref),
+            ),
+          ],
           bottom: TabBar(
             isScrollable: true,
             tabAlignment: TabAlignment.start,
@@ -40,7 +47,7 @@ class AdminScreen extends HookConsumerWidget {
         ),
         body: Column(
           children: [
-            if (repo == null) const _DemoBanner(),
+            if (repo == null) const _DemoBanner() else const _StaticBanner(),
             const Expanded(
               child: TabBarView(
                 children: [
@@ -53,6 +60,83 @@ class AdminScreen extends HookConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Writes the bundled library (free rotation + Pro year library + scripts) into
+/// Firestore. Merge-set by id, so it refreshes bundled items and leaves anything
+/// the founder added manually alone.
+Future<void> _confirmSeed(BuildContext context, WidgetRef ref) async {
+  final messenger = ScaffoldMessenger.of(context);
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Seed content to Firestore?'),
+      content: const Text(
+        'Writes the bundled library into Firestore:\n\n'
+        '• Free rotation — 7 tips, 7 challenges, 7 reflections\n'
+        '• Pro year — 365 tips, 365 challenges, 365 reflections\n'
+        '• 5 scripts\n\n'
+        'Items with the same id are overwritten; anything you added manually is '
+        'left untouched.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: const Text('Seed'),
+        ),
+      ],
+    ),
+  );
+  if (ok != true) return;
+
+  final repo = ref.read(contentRepositoryProvider);
+  if (repo == null) return;
+  messenger.showSnackBar(
+    const SnackBar(content: Text('Seeding a year of content…')),
+  );
+  try {
+    await repo.seedAll(
+      freeTips: kFreeTips,
+      freeChallenges: kFreeChallenges,
+      freeReflections: kFreeReflections,
+      proTips: kProTips,
+      proChallenges: kProChallenges,
+      proReflections: kProReflections,
+      scripts: kSeedScripts,
+    );
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      const SnackBar(content: Text('Seeded ✓  Free rotation + full Pro year.')),
+    );
+  } catch (e) {
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(SnackBar(content: Text('Seed failed: $e')));
+  }
+}
+
+/// The app currently serves content statically from the bundled library, so
+/// edits/seeds here don't reach users until the Firestore read path is re-enabled.
+class _StaticBanner extends StatelessWidget {
+  const _StaticBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      color: kBlue.withValues(alpha: 0.35),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: const Text(
+        'Content is served statically from the app right now. Editing or '
+        'seeding here saves to Firestore, but changes reach users only after a '
+        'new app release (the app no longer reads content from Firestore).',
+        style: TextStyle(fontSize: 12, color: kNavy),
       ),
     );
   }

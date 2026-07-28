@@ -17,6 +17,12 @@ mixin CmsItem {
 
   /// When true, the item is only presented to Pro users. Free by default.
   bool get pro;
+
+  /// Calendar slot for date-scheduled (Pro) content: month 1–12 and day 1–31.
+  /// Null for undated content (e.g. the free rotation). When set, the daily
+  /// selection serves this item on that exact calendar day.
+  int? get month;
+  int? get day;
 }
 
 class ParentingTip with CmsItem {
@@ -30,6 +36,10 @@ class ParentingTip with CmsItem {
   final bool active;
   @override
   final bool pro;
+  @override
+  final int? month;
+  @override
+  final int? day;
 
   const ParentingTip({
     required this.id,
@@ -38,6 +48,8 @@ class ParentingTip with CmsItem {
     this.order = 0,
     this.active = true,
     this.pro = false,
+    this.month,
+    this.day,
   });
 
   factory ParentingTip.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -49,6 +61,8 @@ class ParentingTip with CmsItem {
       order: (d['order'] ?? 0) as int,
       active: (d['active'] ?? true) as bool,
       pro: (d['pro'] ?? false) as bool,
+      month: d['month'] as int?,
+      day: d['day'] as int?,
     );
   }
 
@@ -58,6 +72,8 @@ class ParentingTip with CmsItem {
     'order': order,
     'active': active,
     'pro': pro,
+    'month': month,
+    'day': day,
   };
 
   ParentingTip copyWith({
@@ -66,6 +82,8 @@ class ParentingTip with CmsItem {
     int? order,
     bool? active,
     bool? pro,
+    int? month,
+    int? day,
   }) => ParentingTip(
     id: id,
     text: text ?? this.text,
@@ -73,6 +91,8 @@ class ParentingTip with CmsItem {
     order: order ?? this.order,
     active: active ?? this.active,
     pro: pro ?? this.pro,
+    month: month ?? this.month,
+    day: day ?? this.day,
   );
 }
 
@@ -87,6 +107,10 @@ class ParentingChallenge with CmsItem {
   final bool active;
   @override
   final bool pro;
+  @override
+  final int? month;
+  @override
+  final int? day;
 
   const ParentingChallenge({
     required this.id,
@@ -95,6 +119,8 @@ class ParentingChallenge with CmsItem {
     this.order = 0,
     this.active = true,
     this.pro = false,
+    this.month,
+    this.day,
   });
 
   factory ParentingChallenge.fromDoc(
@@ -108,6 +134,8 @@ class ParentingChallenge with CmsItem {
       order: (d['order'] ?? 0) as int,
       active: (d['active'] ?? true) as bool,
       pro: (d['pro'] ?? false) as bool,
+      month: d['month'] as int?,
+      day: d['day'] as int?,
     );
   }
 
@@ -117,6 +145,8 @@ class ParentingChallenge with CmsItem {
     'order': order,
     'active': active,
     'pro': pro,
+    'month': month,
+    'day': day,
   };
 
   ParentingChallenge copyWith({
@@ -125,6 +155,8 @@ class ParentingChallenge with CmsItem {
     int? order,
     bool? active,
     bool? pro,
+    int? month,
+    int? day,
   }) => ParentingChallenge(
     id: id,
     title: title ?? this.title,
@@ -132,6 +164,8 @@ class ParentingChallenge with CmsItem {
     order: order ?? this.order,
     active: active ?? this.active,
     pro: pro ?? this.pro,
+    month: month ?? this.month,
+    day: day ?? this.day,
   );
 }
 
@@ -145,6 +179,10 @@ class ReflectionPrompt with CmsItem {
   final bool active;
   @override
   final bool pro;
+  @override
+  final int? month;
+  @override
+  final int? day;
 
   const ReflectionPrompt({
     required this.id,
@@ -152,6 +190,8 @@ class ReflectionPrompt with CmsItem {
     this.order = 0,
     this.active = true,
     this.pro = false,
+    this.month,
+    this.day,
   });
 
   factory ReflectionPrompt.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -162,6 +202,8 @@ class ReflectionPrompt with CmsItem {
       order: (d['order'] ?? 0) as int,
       active: (d['active'] ?? true) as bool,
       pro: (d['pro'] ?? false) as bool,
+      month: d['month'] as int?,
+      day: d['day'] as int?,
     );
   }
 
@@ -170,6 +212,8 @@ class ReflectionPrompt with CmsItem {
     'order': order,
     'active': active,
     'pro': pro,
+    'month': month,
+    'day': day,
   };
 
   ReflectionPrompt copyWith({
@@ -177,12 +221,16 @@ class ReflectionPrompt with CmsItem {
     int? order,
     bool? active,
     bool? pro,
+    int? month,
+    int? day,
   }) => ReflectionPrompt(
     id: id,
     prompt: prompt ?? this.prompt,
     order: order ?? this.order,
     active: active ?? this.active,
     pro: pro ?? this.pro,
+    month: month ?? this.month,
+    day: day ?? this.day,
   );
 }
 
@@ -200,6 +248,12 @@ class Script with CmsItem {
   final bool active;
   @override
   final bool pro;
+
+  // Scripts aren't date-scheduled.
+  @override
+  int? get month => null;
+  @override
+  int? get day => null;
 
   const Script({
     required this.id,

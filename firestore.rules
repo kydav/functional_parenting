@@ -14,10 +14,14 @@ service cloud.firestore {
     }
 
     // CMS-managed content: world-readable (public content), admin-only writes.
-    match /tips/{doc}        { allow read: if true; allow write: if isAdmin(); }
-    match /challenges/{doc}  { allow read: if true; allow write: if isAdmin(); }
-    match /reflections/{doc} { allow read: if true; allow write: if isAdmin(); }
-    match /scripts/{doc}     { allow read: if true; allow write: if isAdmin(); }
+    // Pro gating is enforced client-side; the content itself isn't sensitive.
+    match /tips/{doc}            { allow read: if true; allow write: if isAdmin(); }
+    match /challenges/{doc}      { allow read: if true; allow write: if isAdmin(); }
+    match /reflections/{doc}     { allow read: if true; allow write: if isAdmin(); }
+    match /scripts/{doc}         { allow read: if true; allow write: if isAdmin(); }
+    match /tipsPro/{doc}         { allow read: if true; allow write: if isAdmin(); }
+    match /challengesPro/{doc}   { allow read: if true; allow write: if isAdmin(); }
+    match /reflectionsPro/{doc}  { allow read: if true; allow write: if isAdmin(); }
 
     // Workshops: public read, admin-only write. Reservations live in a
     // subcollection keyed by uid — a user can only create/delete their own, and

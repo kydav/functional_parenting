@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:functional_parenting/core/providers/engagement_provider.dart';
 import 'package:functional_parenting/core/providers/theme_provider.dart';
@@ -13,10 +14,13 @@ import 'package:functional_parenting/core/services/purchase_service.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
-  runZonedGuarded(
+Future<void> main() async {
+  await runZonedGuarded(
     () async {
-      WidgetsFlutterBinding.ensureInitialized();
+      final binding = WidgetsFlutterBinding.ensureInitialized();
+      // Hold the native splash until the first frame is up, then remove it
+      // ourselves — the plugin's auto-remove isn't firing on this Flutter.
+      FlutterNativeSplash.preserve(widgetsBinding: binding);
       await Firebase.initializeApp();
 
       // Route uncaught Flutter + platform errors to Crashlytics. Disabled in debug
@@ -48,7 +52,7 @@ void main() {
       // Notification setup must never prevent the app from starting. If anything
       // here fails (e.g. an unrecognized device timezone), log it and carry on.
       try {
-        await NotificationService.instance.init();
+        await NotificationService.initialize(prefs);
         await container
             .read(notificationSettingsProvider.notifier)
             .applyOnLaunch();
@@ -62,9 +66,14 @@ void main() {
           child: const FunctionalParentingApp(),
         ),
       );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        FlutterNativeSplash.remove();
+      });
     },
     (error, stack) {
-      if (!kDebugMode) {
+      if (kDebugMode) {
+        debugPrint('Uncaught error in main zone: $error\n$stack');
+      } else {
         FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
       }
     },
