@@ -44,8 +44,9 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# Firebase — keep generated config out of the repo (recreated locally via
-# `flutterfire configure` and in CI from GitHub secrets)
+# Firebase — keep the actual config/secrets out of the repo (restored in CI
+# from GitHub secrets). firebase.json stays tracked: it holds only project/app
+# ids (no secrets) and the Crashlytics build phase needs it at build time.
 lib/firebase_options.dart
 android/app/google-services.json
 ios/Runner/GoogleService-Info.plist
@@ -55,7 +56,6 @@ macos/firebase_app_id_file.json
 **/google-services.json
 **/GoogleService-Info.plist
 .firebase/
-firebase.json
 .firebaserc
 
 # Fastlane / signing
