@@ -27,6 +27,12 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      # The Xcode "FlutterFire: upload-crashlytics-symbols" build phase invokes
+      # the flutterfire CLI. It lands in ~/.pub-cache/bin, which that script
+      # already puts on PATH.
+      - name: Install FlutterFire CLI
+        run: dart pub global activate flutterfire_cli
+
       - name: Analyze
         run: flutter analyze
 
