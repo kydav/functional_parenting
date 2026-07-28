@@ -51,5 +51,5 @@ final proProvider = Provider<bool>((ref) {
   // can flip between the paid and free experience at will.
   if (ref.watch(isAdminProvider)) return ref.watch(adminProPreviewProvider);
   if (ref.watch(revenueCatProProvider)) return true;
-  return ref.watch(proEntitlementStreamProvider).value ?? false;
+  return ref.watch(proEntitlementStreamProvider).valueOrNull ?? false;
 });

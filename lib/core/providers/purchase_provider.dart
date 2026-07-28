@@ -23,7 +23,7 @@ final customerInfoProvider = StreamProvider<CustomerInfo?>((ref) {
 
 /// Whether the RevenueCat "pro" entitlement is currently active.
 final revenueCatProProvider = Provider<bool>((ref) {
-  final info = ref.watch(customerInfoProvider).value;
+  final info = ref.watch(customerInfoProvider).valueOrNull;
   if (info == null) return false;
   return PurchaseService.instance.entitlementActive(info);
 });

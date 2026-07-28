@@ -53,7 +53,10 @@ class PaywallScreen extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isPro = ref.watch(proProvider);
-    final package = ref.watch(proPackageProvider).value;
+    // valueOrNull (not .value): when the store is unavailable (no Play billing,
+    // restricted account, region), the offerings future errors — .value would
+    // rethrow and crash the paywall. Null just means "no price to show yet".
+    final package = ref.watch(proPackageProvider).valueOrNull;
     final busy = useState(false);
 
     useEffect(() {
