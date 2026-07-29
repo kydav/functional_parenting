@@ -46,6 +46,14 @@ class PurchaseService {
         try {
           if (user != null) {
             await Purchases.logIn(user.uid);
+            final email = user.email;
+            if (email != null && email.isNotEmpty) {
+              await Purchases.setEmail(email);
+            }
+            final name = user.displayName;
+            if (name != null && name.isNotEmpty) {
+              await Purchases.setDisplayName(name);
+            }
           } else {
             await Purchases.logOut();
           }
