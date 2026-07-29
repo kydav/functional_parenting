@@ -214,48 +214,56 @@ class TodayScreen extends HookConsumerWidget {
                           showModalBottomSheet(
                             useRootNavigator: true,
                             context: context,
+                            isScrollControlled: true,
                             builder: (context) {
-                              return Container(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      reflection.prompt,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleLarge
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    TextField(
-                                      controller: reflectionCtrl,
-                                      maxLines: 3,
-                                      decoration: const InputDecoration(
-                                        hintText: 'Take a moment…',
+                              return Padding(
+                                padding: EdgeInsets.only(
+                                  bottom: MediaQuery.of(
+                                    context,
+                                  ).viewInsets.bottom,
+                                ),
+                                child: Container(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        reflection.prompt,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleLarge
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.w500,
+                                            ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 14),
-                                    OutlinedButton.icon(
-                                      onPressed: () {
-                                        HapticFeedback.successNotification();
-                                        ref
-                                            .read(engagementProvider.notifier)
-                                            .saveReflection(
-                                              reflection.prompt,
-                                              reflectionCtrl.text,
-                                            );
-                                        Navigator.pop(context);
-                                      },
-                                      icon: const Icon(
-                                        Icons.check_rounded,
-                                        size: 18,
+                                      const SizedBox(height: 12),
+                                      TextField(
+                                        controller: reflectionCtrl,
+                                        maxLines: 3,
+                                        decoration: const InputDecoration(
+                                          hintText: 'Take a moment…',
+                                        ),
                                       ),
-                                      label: const Text('Save'),
-                                    ),
-                                  ],
+                                      const SizedBox(height: 14),
+                                      OutlinedButton.icon(
+                                        onPressed: () {
+                                          HapticFeedback.successNotification();
+                                          ref
+                                              .read(engagementProvider.notifier)
+                                              .saveReflection(
+                                                reflection.prompt,
+                                                reflectionCtrl.text,
+                                              );
+                                          Navigator.pop(context);
+                                        },
+                                        icon: const Icon(
+                                          Icons.check_rounded,
+                                          size: 18,
+                                        ),
+                                        label: const Text('Save'),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               );
                             },
