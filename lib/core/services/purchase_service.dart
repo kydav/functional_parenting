@@ -18,8 +18,8 @@ class PurchaseService {
 
   // ── Fill these from RevenueCat → Project settings → API keys ──────────────
   // These are the *public* SDK keys (safe to ship in the app binary).
-  static const String _appleApiKey = 'appl_CfCVKUArdjpBCCdDdzmAUcELPna';
-  static const String _googleApiKey = 'goog_MNPRmjqTxKcRYRiooLASNfwPszS';
+  static const String _appleApiKey = 'appl_ogTiOrUneBTCyhgIplVpFXAbxME';
+  static const String _googleApiKey = 'goog_NqsuffbAsEingnRQyJsxXrSAWPM';
 
   /// The entitlement identifier configured in RevenueCat (Project → Entitlements).
   static const String entitlementId = 'Functional Parenting Pro';
