@@ -17,6 +17,7 @@ class LoginScreen extends HookConsumerWidget {
     final password = useTextEditingController();
     final busy = useState(false);
     final error = useState<String?>(null);
+    final obscurePassword = useState(true);
 
     Future<void> submit() async {
       // Basic client-side checks so we can show friendly guidance before ever
@@ -145,9 +146,19 @@ class LoginScreen extends HookConsumerWidget {
                         const SizedBox(height: 12),
                         TextField(
                           controller: password,
-                          obscureText: true,
-                          decoration: const InputDecoration(
+                          obscureText: obscurePassword.value,
+                          decoration: InputDecoration(
                             labelText: 'Password',
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                obscurePassword.value
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                              ),
+                              onPressed: () {
+                                obscurePassword.value = !obscurePassword.value;
+                              },
+                            ),
                           ),
                           textInputAction: TextInputAction.done,
                           onSubmitted: (_) => submit(),
