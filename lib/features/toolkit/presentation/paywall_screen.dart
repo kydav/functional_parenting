@@ -81,7 +81,7 @@ class PaywallScreen extends HookConsumerWidget {
       }
       busy.value = true;
       try {
-        final info = await Purchases.purchasePackage(pkg);
+        final info = await Purchases.getCustomerInfo();
         if (!context.mounted) return;
         if (PurchaseService.instance.entitlementActive(info)) {
           AnalyticsService.instance.track('toolkit_unlocked');

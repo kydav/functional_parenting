@@ -1,8 +1,8 @@
 name: functional_parenting
-description: "A new Flutter project."
+description: "Understand child behavior and get practical tools for calmer parenting."
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
-version: 1.0.1+1
+version: 1.0.2+1
 
 environment:
   sdk: ^3.12.0
@@ -25,7 +25,7 @@ dependencies:
   google_sign_in: ^6.2.1
   hooks_riverpod: ^2.6.1
   intl: ^0.20.2
-  purchases_flutter: ^8.0.0
+  purchases_flutter: ^10.7.0
   shared_preferences: ^2.3.3
   timezone: ^0.11.1
   url_launcher: ^6.3.2
