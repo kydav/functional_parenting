@@ -81,9 +81,12 @@ class PaywallScreen extends HookConsumerWidget {
       }
       busy.value = true;
       try {
-        final info = await Purchases.getCustomerInfo();
+        // Actually run the purchase (presents the StoreKit / Play sheet). The
+        // previous code only fetched CustomerInfo, so the button appeared to do
+        // nothing — which is what App Review flagged (2.1(b)).
+        final result = await Purchases.purchase(PurchaseParams.package(pkg));
         if (!context.mounted) return;
-        if (PurchaseService.instance.entitlementActive(info)) {
+        if (PurchaseService.instance.entitlementActive(result.customerInfo)) {
           AnalyticsService.instance.track('toolkit_unlocked');
           snack("You're all set — the toolkit is unlocked.");
           context.pop();
