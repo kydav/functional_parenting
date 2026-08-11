@@ -82,7 +82,12 @@ class AuthNotifier extends ChangeNotifier {
 
   /// Native Sign in with Apple via Firebase's provider flow.
   Future<void> signInWithApple() async {
-    final provider = AppleAuthProvider();
+    // Apple returns the name/email only when these scopes are requested — and
+    // only on the *first* authorization for a given Apple ID. Without them the
+    // account comes back with no email and no display name.
+    final provider = AppleAuthProvider()
+      ..addScope('email')
+      ..addScope('name');
     await _auth!.signInWithProvider(provider);
     await _ensureDisplayName();
     AnalyticsService.instance.track('login', {'method': 'apple'});
