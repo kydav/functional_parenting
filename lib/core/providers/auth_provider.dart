@@ -34,6 +34,22 @@ class AuthNotifier extends ChangeNotifier {
     return email.isNotEmpty ? email.split('@').first : 'there';
   }
 
+  /// The social provider backing this account, if any — `'apple'` or `'google'`.
+  /// Null for email/password accounts.
+  String? get socialProvider {
+    final ids =
+        currentUser?.providerData.map((p) => p.providerId).toSet() ??
+        const <String>{};
+    if (ids.contains('apple.com')) return 'apple';
+    if (ids.contains('google.com')) return 'google';
+    return null;
+  }
+
+  /// Whether this account signs in with email/password (so a password reset
+  /// applies). False for social-only accounts.
+  bool get hasPasswordAuth =>
+      currentUser?.providerData.any((p) => p.providerId == 'password') ?? false;
+
   String get userInitials {
     final parts = userName.trim().split(' ');
     if (parts.length >= 2) {

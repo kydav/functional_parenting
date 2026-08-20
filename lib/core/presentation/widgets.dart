@@ -5,21 +5,29 @@ import 'package:functional_parenting/core/theme/app_theme.dart';
 /// Constrains content to a comfortable reading width and applies page padding.
 class PageBody extends StatelessWidget {
   final Widget child;
+  final bool showTrack;
   final EdgeInsets padding;
   const PageBody({
     required this.child,
+    this.showTrack = false,
     this.padding = const EdgeInsets.fromLTRB(20, 20, 20, 170),
+
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: padding,
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 720),
-          child: child,
+    return Scrollbar(
+      thumbVisibility: showTrack,
+      thickness: 8,
+      radius: const Radius.circular(8),
+      child: SingleChildScrollView(
+        padding: padding,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720),
+            child: child,
+          ),
         ),
       ),
     );

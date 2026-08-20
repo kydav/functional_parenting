@@ -11,6 +11,8 @@ import 'package:functional_parenting/core/providers/theme_provider.dart';
 import 'package:functional_parenting/core/router/router.dart';
 import 'package:functional_parenting/core/services/notification_service.dart';
 import 'package:functional_parenting/core/services/purchase_service.dart';
+import 'package:functional_parenting/core/services/rating_prompt_service.dart';
+import 'package:functional_parenting/core/services/remote_config_service.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -43,7 +45,18 @@ Future<void> main() async {
         debugPrint('Purchase setup skipped at launch: $e');
       }
 
+      // Load remote flags (paywall kill-switch). Best-effort; never blocks launch.
+      try {
+        await RemoteConfigService.instance.init();
+      } catch (e) {
+        debugPrint('Remote Config setup skipped at launch: $e');
+      }
+
       final prefs = await SharedPreferences.getInstance();
+
+      // Count this launch toward the rating prompt.
+      RatingPromptService.instance.attach(prefs);
+      await RatingPromptService.instance.registerOpen();
 
       final container = ProviderContainer(
         overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],

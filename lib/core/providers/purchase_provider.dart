@@ -29,9 +29,16 @@ final revenueCatProProvider = Provider<bool>((ref) {
 });
 
 /// The package to purchase (price shown on the paywall). Null until an offering
-/// is configured in RevenueCat.
+/// is configured in RevenueCat. Used by the legacy one-time paywall.
 final proPackageProvider = FutureProvider<Package?>((ref) {
   // Re-fetch when entitlement state changes (e.g. after a restore).
   ref.watch(customerInfoProvider);
   return PurchaseService.instance.proPackage();
+});
+
+/// The tiered packages (monthly / annual / lifetime) for the tiered paywall.
+/// Empty until an offering is configured in RevenueCat.
+final proPackagesProvider = FutureProvider<List<Package>>((ref) {
+  ref.watch(customerInfoProvider);
+  return PurchaseService.instance.proPackages();
 });

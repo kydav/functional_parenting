@@ -6,14 +6,32 @@ import 'package:functional_parenting/core/providers/pro_provider.dart';
 import 'package:functional_parenting/core/providers/purchase_provider.dart';
 import 'package:functional_parenting/core/services/analytics_service.dart';
 import 'package:functional_parenting/core/services/purchase_service.dart';
+import 'package:functional_parenting/core/services/remote_config_service.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
+import 'package:functional_parenting/features/toolkit/presentation/paywall_tiered.dart';
 import 'package:functional_parenting/features/tools/presentation/worksheets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
-class PaywallScreen extends HookConsumerWidget {
+/// Entry point for `/paywall`. Shows the tiered paywall by default; the Remote
+/// Config `use_tiered_paywall` kill-switch reverts to the legacy one-time
+/// paywall instantly (no app-store review) if live billing misbehaves.
+class PaywallScreen extends StatelessWidget {
   const PaywallScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return RemoteConfigService.instance.useTieredPaywall
+        ? const TieredPaywallView()
+        : const LegacyPaywallView();
+  }
+}
+
+/// The original one-time "Starter Toolkit" purchase flow — kept as the fallback
+/// behind the [PaywallScreen] kill-switch.
+class LegacyPaywallView extends HookConsumerWidget {
+  const LegacyPaywallView({super.key});
 
   /// The ongoing tools you return to as you put the framework into practice.
   /// (The four guided phase worksheets are pulled from [kWorksheets].) Bodies

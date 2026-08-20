@@ -106,7 +106,7 @@ class AccountScreen extends HookConsumerWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Account & password')),
+      appBar: AppBar(title: const Text('Account')),
       body: PageBody(
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
         child: Column(
@@ -170,28 +170,59 @@ class AccountScreen extends HookConsumerWidget {
             ),
             const SizedBox(height: 24),
 
-            const Eyebrow('Password'),
-            const SizedBox(height: 10),
-            SoftCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "We'll email you a secure link to reset your password.",
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: context.colors.textSecondary,
-                      height: 1.5,
+            // Password reset only applies to email/password accounts. For
+            // social sign-ins, show the provider instead of the reset area.
+            if (auth.hasPasswordAuth) ...[
+              const Eyebrow('Password'),
+              const SizedBox(height: 10),
+              SoftCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "We'll email you a secure link to reset your password.",
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: context.colors.textSecondary,
+                        height: 1.5,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: auth.userEmail.isEmpty ? null : sendReset,
-                    icon: const Icon(Icons.lock_reset_rounded, size: 18),
-                    label: const Text('Send password reset email'),
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      onPressed: auth.userEmail.isEmpty ? null : sendReset,
+                      icon: const Icon(Icons.lock_reset_rounded, size: 18),
+                      label: const Text('Send password reset email'),
+                    ),
+                  ],
+                ),
               ),
-            ),
+            ] else ...[
+              const Eyebrow('Sign-in method'),
+              const SizedBox(height: 10),
+              SoftCard(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.verified_user_outlined,
+                      size: 20,
+                      color: context.colors.textSecondary,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        auth.socialProvider == 'apple'
+                            ? 'Signed in with Apple'
+                            : 'Signed in with Google',
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 32),
             _SettingsRow(
               icon: Icons.logout_rounded,

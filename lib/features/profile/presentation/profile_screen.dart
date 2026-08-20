@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:functional_parenting/core/presentation/feedback_sheet.dart';
 import 'package:functional_parenting/core/presentation/widgets.dart';
 import 'package:functional_parenting/core/providers/admin_provider.dart';
+import 'package:functional_parenting/core/providers/app_info_provider.dart';
 import 'package:functional_parenting/core/providers/auth_provider.dart';
 import 'package:functional_parenting/core/providers/engagement_provider.dart';
 import 'package:functional_parenting/core/providers/pro_provider.dart';
@@ -52,6 +54,29 @@ class ProfileScreen extends ConsumerWidget {
                       Text(
                         auth.userEmail,
                         style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    if (auth.socialProvider != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.verified_user_outlined,
+                              size: 13,
+                              color: context.colors.textSecondary,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              auth.socialProvider == 'apple'
+                                  ? 'Signed in with Apple'
+                                  : 'Signed in with Google',
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: context.colors.textSecondary,
+                                  ),
+                            ),
+                          ],
+                        ),
                       ),
                   ],
                 ),
@@ -186,9 +211,14 @@ class ProfileScreen extends ConsumerWidget {
             onTap: () => _pickTheme(context, ref, themeMode),
           ),
           _SettingsTile(
-            icon: Icons.lock_outline_rounded,
-            label: 'Account & password',
+            icon: Icons.manage_accounts_outlined,
+            label: 'Account',
             onTap: () => context.push('/account'),
+          ),
+          _SettingsTile(
+            icon: Icons.feedback_outlined,
+            label: 'Send feedback',
+            onTap: () => showFeedbackSheet(context),
           ),
           _SettingsTile(
             icon: Icons.privacy_tip_outlined,
@@ -199,6 +229,15 @@ class ProfileScreen extends ConsumerWidget {
                 mode: LaunchMode.inAppBrowserView,
               );
             },
+          ),
+          const SizedBox(height: 24),
+          Center(
+            child: Text(
+              'Version ${ref.watch(appVersionProvider).valueOrNull ?? ''}',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: context.colors.textSecondary,
+              ),
+            ),
           ),
         ],
       ),

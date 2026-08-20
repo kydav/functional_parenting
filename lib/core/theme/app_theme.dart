@@ -25,6 +25,7 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.textPrimary,
     required this.textSecondary,
     required this.border,
+    required this.onSurface,
   });
 
   final Color pageBg;
@@ -35,6 +36,7 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color textPrimary;
   final Color textSecondary;
   final Color border;
+  final Color onSurface;
 
   static const light = AppColors(
     pageBg: Color(0xFFF4F5F8),
@@ -45,6 +47,7 @@ class AppColors extends ThemeExtension<AppColors> {
     textPrimary: kNavy,
     textSecondary: Color(0xFF5B6178),
     border: Color(0xFFE4E7EF),
+    onSurface: kNavy,
   );
 
   static const dark = AppColors(
@@ -56,6 +59,7 @@ class AppColors extends ThemeExtension<AppColors> {
     textPrimary: Color(0xFFF4F5F8),
     textSecondary: Color(0xFF9AA6C4),
     border: Color(0xFF283056),
+    onSurface: Color(0xFFF4F5F8),
   );
 
   @override
@@ -68,6 +72,7 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? textPrimary,
     Color? textSecondary,
     Color? border,
+    Color? onSurface,
   }) => AppColors(
     pageBg: pageBg ?? this.pageBg,
     surface: surface ?? this.surface,
@@ -77,6 +82,7 @@ class AppColors extends ThemeExtension<AppColors> {
     textPrimary: textPrimary ?? this.textPrimary,
     textSecondary: textSecondary ?? this.textSecondary,
     border: border ?? this.border,
+    onSurface: onSurface ?? this.onSurface,
   );
 
   @override
@@ -91,6 +97,7 @@ class AppColors extends ThemeExtension<AppColors> {
       textPrimary: Color.lerp(textPrimary, other.textPrimary, t)!,
       textSecondary: Color.lerp(textSecondary, other.textSecondary, t)!,
       border: Color.lerp(border, other.border, t)!,
+      onSurface: Color.lerp(onSurface, other.onSurface, t)!,
     );
   }
 }

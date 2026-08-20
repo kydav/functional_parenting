@@ -1,22 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:functional_parenting/core/presentation/rating_dialog.dart';
 import 'package:functional_parenting/core/providers/auth_provider.dart';
 import 'package:functional_parenting/core/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
 
-class AppShell extends ConsumerWidget {
+class AppShell extends ConsumerStatefulWidget {
   final String location;
   final Widget child;
 
   const AppShell({required this.location, required this.child, super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends ConsumerState<AppShell> {
+  @override
+  void initState() {
+    super.initState();
+    // Once the app has settled into the authed shell, maybe surface the rating
+    // prompt. Guarded internally (eligibility + once-per-session), so a rebuild
+    // can't re-trigger it.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await Future<void>.delayed(const Duration(seconds: 2));
+      if (mounted) await maybeShowRatingPrompt(context);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final isWide = MediaQuery.of(context).size.width >= 800;
     return isWide
-        ? _DesktopShell(location: location, child: child)
-        : _MobileShell(location: location, child: child);
+        ? _DesktopShell(location: widget.location, child: widget.child)
+        : _MobileShell(location: widget.location, child: widget.child);
   }
 }
 
@@ -316,6 +334,7 @@ class _FloatingNav extends StatelessWidget {
       decoration: BoxDecoration(
         color: kNavy,
         borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: kBlue.withAlpha(80)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.2),

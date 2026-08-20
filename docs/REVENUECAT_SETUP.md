@@ -7,7 +7,10 @@ gracefully: the paywall shows, but the Unlock button just says "coming soon" and
 no purchase is attempted. Admins/founders always have access, and you can comp
 any account manually (see the bottom of this doc).
 
-The entitlement identifier the code expects is **`pro`**. Match it exactly.
+The entitlement identifier the code expects is **`Functional Parenting Pro`**
+(see `entitlementId` in `lib/core/services/purchase_service.dart`). Match it
+exactly in RevenueCat. (Not to be confused with the Firestore comp-doc id `pro`
+under §Comping access below — that one is correct as-is.)
 
 ---
 
@@ -43,12 +46,17 @@ The entitlement identifier the code expects is **`pro`**. Match it exactly.
      shared secret) so RevenueCat can validate receipts.
    - Google app: upload the **Play service-account JSON** with the Pub/Sub +
      billing permissions RevenueCat asks for.
-2. **Products** → import/add both store products (`fp_starter_toolkit` on each
-   platform).
-3. **Entitlements** → create one called **`pro`** and attach both products to it.
-4. **Offerings** → create an offering (the "current" one) and add a **Package**
-   containing the product. The app buys `offerings.current.availablePackages.first`,
-   so a single default package is all you need.
+2. **Products** → add the three store products (same ids on each platform):
+   a **monthly** subscription (`fp_pro_monthly`), an **annual** subscription
+   (`fp_pro_annual`), and a **lifetime** non-consumable (`fp_pro_lifetime`). Put
+   the **2-week free trial** as an introductory offer on the two subscriptions in
+   App Store Connect / Play.
+3. **Entitlements** → create one called **`Functional Parenting Pro`** and attach
+   **all three** products to it — any of them unlocks the same entitlement.
+4. **Offerings** → create the "current" offering and add three **Packages** in the
+   standard slots: **Monthly**, **Annual**, and **Lifetime** (RevenueCat's typed
+   package types). The tiered paywall reads `offerings.current.monthly / .annual /
+   .lifetime`; the legacy fallback paywall uses `.availablePackages.first`.
 5. **API keys** (Project settings → API keys) → copy the **public SDK keys**:
    - Apple key → paste into `_appleApiKey`
    - Google key → paste into `_googleApiKey`

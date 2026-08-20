@@ -71,10 +71,25 @@ class PurchaseService {
 
   /// The package a parent buys to unlock the toolkit — the first package in the
   /// current offering. Returns null when unconfigured or no offering is set up.
+  /// Used by the legacy (one-time) paywall fallback.
   Future<Package?> proPackage() async {
     if (!isConfigured) return null;
     final offerings = await Purchases.getOfferings();
     final packages = offerings.current?.availablePackages ?? const [];
     return packages.isEmpty ? null : packages.first;
+  }
+
+  /// The tiered packages shown on the paywall, in display order: monthly, annual,
+  /// lifetime. Any slot not configured in the current offering is omitted. All of
+  /// them grant the same [entitlementId], so the entitlement check is unchanged.
+  Future<List<Package>> proPackages() async {
+    if (!isConfigured) return const [];
+    final current = (await Purchases.getOfferings()).current;
+    if (current == null) return const [];
+    return [
+      if (current.monthly != null) current.monthly!,
+      if (current.annual != null) current.annual!,
+      if (current.lifetime != null) current.lifetime!,
+    ];
   }
 }
