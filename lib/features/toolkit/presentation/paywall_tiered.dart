@@ -397,9 +397,7 @@ class _TierCard extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Text(
-              package.packageType == PackageType.lifetime
-                  ? '\$49.99'
-                  : package.storeProduct.priceString,
+              package.storeProduct.priceString,
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
@@ -448,7 +446,7 @@ class _LegalFootnote extends StatelessWidget {
     );
     final link = muted?.copyWith(
       decoration: TextDecoration.underline,
-      color: kNavy,
+      color: context.colors.textPrimary,
     );
     void open(String url) =>
         launchUrl(Uri.parse(url), mode: LaunchMode.inAppBrowserView);

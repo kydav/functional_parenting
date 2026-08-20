@@ -2,7 +2,7 @@ name: functional_parenting
 description: "Understand child behavior and get practical tools for calmer parenting."
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
-version: 1.1.0+1
+version: 1.1.0+2
 
 environment:
   sdk: ^3.12.0
