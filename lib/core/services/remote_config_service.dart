@@ -24,10 +24,15 @@ class RemoteConfigService {
     try {
       final rc = FirebaseRemoteConfig.instance;
       await rc.setConfigSettings(
-        RemoteConfigSettings(
-          fetchTimeout: const Duration(seconds: 8),
-          minimumFetchInterval: const Duration(hours: 1),
-        ),
+        kDebugMode
+            ? RemoteConfigSettings(
+                fetchTimeout: const Duration(seconds: 8),
+                minimumFetchInterval: Duration.zero,
+              )
+            : RemoteConfigSettings(
+                fetchTimeout: const Duration(seconds: 8),
+                minimumFetchInterval: const Duration(hours: 1),
+              ),
       );
       await rc.setDefaults(const {_kUseTieredPaywall: true});
       _rc = rc;
